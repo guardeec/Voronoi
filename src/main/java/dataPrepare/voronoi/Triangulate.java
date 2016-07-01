@@ -1,6 +1,7 @@
 package dataPrepare.voronoi;
 
 import dataPrepare.data.Graph;
+import dataPrepare.data.Host;
 import dataPrepare.data.Triangle;
 
 import java.io.*;
@@ -28,14 +29,14 @@ public class Triangulate {
 
         //заполняем первый кортеж
         String nodesParameters = "";
-        nodesParameters+= graph.getHostsNumber()+ " 2 0 1\n";
+        nodesParameters+= graph.getHostNumber()+ " 2 0 1\n";
 
         //заполняем второй кортеж
         String nodes = "";
-        for (int i=0, nodeNumber=1; i<graph.getHostsNumber(); i++, nodeNumber++){
+        for (int i=0, nodeNumber=1; i<graph.getHostNumber(); i++, nodeNumber++){
             nodes+= nodeNumber+" "
-                    +graph.getHost(i).getX()+" "
-                    +graph.getHost(i).getY()+" "
+                    +(int)graph.getHosts().get(i).getCoordinate().getX()+" "
+                    +(int)graph.getHosts().get(i).getCoordinate().getY()+" "
                     +nodeNumber+"\n";
         }
         nodes+="\n";
@@ -46,13 +47,13 @@ public class Triangulate {
 
         //заполняем четвёртый кортеж
         String links="";
-        for (int i=0, nodeNumber=0, linkNumber=1; i<graph.getHostsNumber(); i++){
+        for (int i=0, nodeNumber=0, linkNumber=1; i<graph.getHostNumber(); i++){
             nodeNumber=i+1;
-            int[] relations = graph.getRelations(i);
-            if(relations.length>1){
-                for (int q=0; q<relations.length; q++){
-                    if(nodeNumber!=relations[q]+1){
-                        links+=linkNumber+" "+nodeNumber+" "+(relations[q]+1)+" 1\n";
+            List<Host> relations = graph.getRelations(graph.getHosts().get(i));
+            if(relations.size()>0){
+                for (int q=0; q<relations.size(); q++){
+                    if(nodeNumber!=graph.getHosts().indexOf(relations.get(q))+1){
+                        links+=linkNumber+" "+nodeNumber+" "+(graph.getHosts().indexOf(relations.get(q))+1)+" 1\n";
                         linkNumber++;
                     }
                 }
@@ -73,7 +74,7 @@ public class Triangulate {
         return output;
     }
 
-    public static ArrayList<Triangle> make(Graph graph){
+    public static ArrayList make(Graph graph){
         //создаём файл для записи
         File file = new File("graph.poly");
         if(!file.exists()){
@@ -125,30 +126,34 @@ public class Triangulate {
             String phrase = linesAsArray[i];
             String delims = "[ ]+";
             String[] tokens = phrase.split(delims);
-            triangles.add(new Triangle(Integer.parseInt(tokens[2]) - 1,
-                            Integer.parseInt(tokens[3]) - 1,
-                            Integer.parseInt(tokens[4]) - 1)
+
+            triangles.add(
+                    new Triangle(
+                            Integer.parseInt(tokens[tokens.length-3]) - 1,
+                            Integer.parseInt(tokens[tokens.length-2]) - 1,
+                            Integer.parseInt(tokens[tokens.length-1]) - 1
+                    )
             );
         }
         return triangles;
     }
 
 
-
-    public static Graph addToGraph(Graph graph, ArrayList<Triangle> triangles){
-        //добавим набор треугольников в граф
-        for (int i=0; i<triangles.size(); i++){
-            graph.setRelations( triangles.get(i).getFirstDot(),
-                                triangles.get(i).getSecondDot()
-            );
-            graph.setRelations( triangles.get(i).getSecondDot(),
-                                triangles.get(i).getThirdDot()
-            );
-            graph.setRelations( triangles.get(i).getThirdDot(),
-                                triangles.get(i).getFirstDot()
-            );
-        }
-        return graph;
-    }
+//
+//    public static Graph addToGraph(Graph graph, ArrayList<Triangle> triangles){
+//        //добавим набор треугольников в граф
+//        for (int i=0; i<triangles.size(); i++){
+//            graph.setRelations( triangles.get(i).getFirstDot(),
+//                                triangles.get(i).getSecondDot()
+//            );
+//            graph.setRelations( triangles.get(i).getSecondDot(),
+//                                triangles.get(i).getThirdDot()
+//            );
+//            graph.setRelations( triangles.get(i).getThirdDot(),
+//                                triangles.get(i).getFirstDot()
+//            );
+//        }
+//        return graph;
+//    }
 
 }

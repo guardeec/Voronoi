@@ -1,6 +1,8 @@
 package dataPrepare.voronoi;
 
+import dataPrepare.data.Coordinate;
 import dataPrepare.data.Graph;
+import dataPrepare.data.Host;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -13,9 +15,7 @@ public class ConvexHull {
     /*
     Построение выпуклой обочки
      */
-
-    public ArrayList<Point> quickHull(ArrayList<Point> points)
-    {
+    private ArrayList<Point> quickHull(ArrayList<Point> points) {
         ArrayList<Point> convexHull = new ArrayList<Point>();
         if (points.size() < 3)
             return (ArrayList) points.clone();
@@ -23,15 +23,12 @@ public class ConvexHull {
         int minPoint = -1, maxPoint = -1;
         int minX = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
-        for (int i = 0; i < points.size(); i++)
-        {
-            if (points.get(i).x < minX)
-            {
+        for (int i = 0; i < points.size(); i++) {
+            if (points.get(i).x < minX) {
                 minX = points.get(i).x;
                 minPoint = i;
             }
-            if (points.get(i).x > maxX)
-            {
+            if (points.get(i).x > maxX) {
                 maxX = points.get(i).x;
                 maxPoint = i;
             }
@@ -46,8 +43,7 @@ public class ConvexHull {
         ArrayList<Point> leftSet = new ArrayList<Point>();
         ArrayList<Point> rightSet = new ArrayList<Point>();
 
-        for (int i = 0; i < points.size(); i++)
-        {
+        for (int i = 0; i < points.size(); i++) {
             Point p = points.get(i);
             if (pointLocation(A, B, p) == -1)
                 leftSet.add(p);
@@ -59,9 +55,7 @@ public class ConvexHull {
 
         return convexHull;
     }
-
-    public int distance(Point A, Point B, Point C)
-    {
+    private int distance(Point A, Point B, Point C) {
         int ABx = B.x - A.x;
         int ABy = B.y - A.y;
         int num = ABx * (A.y - C.y) - ABy * (A.x - C.x);
@@ -69,10 +63,7 @@ public class ConvexHull {
             num = -num;
         return num;
     }
-
-    public void hullSet(Point A, Point B, ArrayList<Point> set,
-                        ArrayList<Point> hull)
-    {
+    private void hullSet(Point A, Point B, ArrayList<Point> set, ArrayList<Point> hull) {
         int insertPosition = hull.indexOf(B);
         if (set.size() == 0)
             return;
@@ -124,9 +115,7 @@ public class ConvexHull {
         hullSet(P, B, leftSetPB, hull);
 
     }
-
-    public int pointLocation(Point A, Point B, Point P)
-    {
+    private int pointLocation(Point A, Point B, Point P) {
         int cp1 = (B.x - A.x) * (P.y - A.y) - (B.y - A.y) * (P.x - A.x);
         if (cp1 > 0)
             return 1;
@@ -139,41 +128,67 @@ public class ConvexHull {
     /*
     возвращает список хостов-членов выпуклой обочки
      */
-    public static ArrayList<Integer> get(Graph graph)
-    {
+    public static ArrayList<Host> get(Graph graph) {
         ArrayList<Point> points = new ArrayList<Point>();
-        for (int i = 0; i < graph.getHostsNumber(); i++)
-        {
-            float x = graph.getHost(i).getX();
-            float y = graph.getHost(i).getY();
-            Point e = new Point(Math.round(x), Math.round(y));
+        for (int i = 0; i < graph.getHostNumber(); i++) {
+            Point e = new Point(
+                    Math.round(graph.getHosts().get(i).getCoordinate().getX()),
+                    Math.round(graph.getHosts().get(i).getCoordinate().getY())
+            );
             points.add(i, e);
         }
-
         ConvexHull qh = new ConvexHull();
+
         ArrayList<Point> p = qh.quickHull(points);
-
-        ArrayList<Integer> hosts = new ArrayList<>();
+        ArrayList<Host> hosts = new ArrayList<>();
         for (int i = 0; i < p.size(); i++){
-            hosts.add(graph.getHostId(p.get(i).x, p.get(i).y));
+            hosts.add(
+                    getHostByCoordinate(
+                            graph, new Coordinate(
+                                    p.get(i).x,
+                                    p.get(i).y
+                            )
+                    )
+            );
         }
-
         return hosts;
     }
+
+    /*
+    Получить выпукулю оболочку
+     */
+//    public static Graph getHull(Graph graph) {
+//        ArrayList<Host> hull = ConvexHull.get(graph);
+//        Graph graphWithHull = new Graph();
+//        for (int i=0; i<hull.size(); i++){
+//            graphWithHull.setHost(graph.getHost(hull.get(i)));
+//        }
+//        return graphWithHull;
+//    }
 
     /*
     изменяет граф, добавляя в его свзяи выпуклую оболочку
      */
     public static Graph make(Graph graph){
-        ArrayList<Integer> hull = ConvexHull.get(graph);
-        Graph graphWithHull = new Graph(graph);
+        ArrayList<Host> hull = ConvexHull.get(graph);
         for (int i=0; i<hull.size()-1; i++){
-            graphWithHull.setRelations(hull.get(i), hull.get(i+1));
+            graph.setRelation(hull.get(i), hull.get(i+1));
             if(i==hull.size()-2){
-                graphWithHull.setRelations(hull.get(hull.size()-1), hull.get(0));
+                graph.setRelation(hull.get(hull.size()-1), hull.get(0));
             }
         }
-        return graphWithHull;
+        return graph;
+    }
+
+    private static Host getHostByCoordinate(Graph graph, Coordinate coordinate){
+        for (Host host : graph.getHosts()){
+            if (host.getCoordinate().getX() == coordinate.getX() &&
+                    host.getCoordinate().getY() == coordinate.getY()
+                    ){
+                return host;
+            }
+        }
+        return null;
     }
 
 
