@@ -24,9 +24,17 @@
         <processorPath useClasspath="true" />
         <module name="D3jsTutorial" />
       </profile>
+      <profile default="false" name="Annotation profile for Voronoi" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="true" />
+        <module name="Voronoi" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="D3jsTutorial" target="1.8" />
+      <module name="Voronoi" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

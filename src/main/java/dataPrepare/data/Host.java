@@ -33,12 +33,12 @@ public class Host implements HostImpl{
         this.coordinate = coordinate;
     }
 
-    public Object getMetrics() {
-        return metrics;
-    }
-    public void setMetrics(Object metrics) {
-        this.metrics = metrics;
-    }
+//    public Object getMetrics() {
+//        return metrics;
+//    }
+//    public void setMetrics(Object metrics) {
+//        this.metrics = metrics;
+//    }
 
     @Override
     public int hashCode() {

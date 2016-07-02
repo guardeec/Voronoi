@@ -2,9 +2,10 @@ package dataPrepare.draw;/**
  * Created by anna on 27.08.15.
  */
 
-import com.google.gson.Gson;
-import dataPrepare.data.*;
-import dataPrepare.prepare.GenerateGraph;
+import dataPrepare.data.Coordinate;
+import dataPrepare.data.Graph;
+import dataPrepare.data.Host;
+import dataPrepare.data.Voronoi;
 import dataPrepare.prepare.GenereatePlanarGraphUsingTriangulation;
 import javafx.application.Application;
 import javafx.scene.Group;
@@ -16,10 +17,6 @@ import javafx.scene.shape.Polygon;
 import javafx.stage.Stage;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
 
 public class Visio extends Application {
 
@@ -37,7 +34,7 @@ public class Visio extends Application {
         Scene scene = new Scene(group, frameSizeX, frameSizeY);
         GenereatePlanarGraphUsingTriangulation generator = new GenereatePlanarGraphUsingTriangulation();
         Graph graph = generator.generate(150, 500, 500, 0.5f);
-        Voronoi voronoi = new Voronoi(graph);
+        Voronoi voronoi = new Voronoi(graph, frameSizeX, frameSizeY);
         //drawGraph(graph, group,0);
         //drawGraph(voronoi.voronoiLikeAGraph(voronoi), group,1);
         drawVoronoi(voronoi, group);
