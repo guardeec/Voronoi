@@ -1,4 +1,4 @@
-package dataPrepare.data;
+package dataPrepare.data.graph;
 
 import com.google.gson.Gson;
 
@@ -22,7 +22,7 @@ public class Graph {
         for (Host host : graph.getHosts()){
             Host cloneHost = new Host(host);
             this.nodes.add(cloneHost);
-            this.links.put(cloneHost, new LinkedList<>());
+            this.links.put(cloneHost, new LinkedList<Host>());
         }
         for (Map.Entry<Host, List<Host>> hostListEntry : graph.getRelations().entrySet()){
             Host clonedHost = null;
@@ -47,7 +47,7 @@ public class Graph {
 
     public void setHost(Host host){
         nodes.add(host);
-        links.put(host, new LinkedList<>());
+        links.put(host, new LinkedList<Host>());
     }
     public List<Host> getHosts(){
         return nodes;
@@ -123,4 +123,76 @@ public class Graph {
         return gson.toJson(this);
     }
 
+    public List<List<Host>> getEdges(){
+        List<List<Host>> edges = new ArrayList<>();
+        for (Host hostFrom : nodes){
+            for (Host hostTo : links.get(hostFrom)){
+                boolean contains = false;
+                for (List<Host> edge : edges){
+                    if ((edge.get(0).equals(hostFrom) && edge.get(1).equals(hostTo))
+                            ||
+                            (edge.get(1).equals(hostFrom) && edge.get(0).equals(hostTo))
+                            ){
+                        contains=true;
+                    }
+                }
+                if (!contains){
+                    List<Host> edge = new LinkedList<>();
+                    edge.add(hostFrom);
+                    edge.add(hostTo);
+                    edges.add(edge);
+                }
+            }
+        }
+        return edges;
+    }
+
+    public boolean checkOnPlanar(){
+        List<List<Host>> edges = getEdges();
+        for (int i=0; i<edges.size(); i++){
+            for (int q=i; q<edges.size(); q++){
+                if (
+                        edges.get(i)!=edges.get(q)
+                                &&
+                                edges.get(i).get(0)!=edges.get(i).get(1)
+                                &&
+                                edges.get(i).get(0)!=edges.get(q).get(0)
+                                &&
+                                edges.get(i).get(0)!=edges.get(q).get(1)
+                                &&
+                                edges.get(i).get(1)!=edges.get(q).get(0)
+                                &&
+                                edges.get(i).get(1)!=edges.get(q).get(1)
+                                &&
+                                edges.get(q).get(0)!=edges.get(q).get(1)
+                        ) {
+                    if (IsLinePartsIntersected(
+                            edges.get(i).get(0).getCoordinate(),
+                            edges.get(i).get(1).getCoordinate(),
+                            edges.get(q).get(0).getCoordinate(),
+                            edges.get(q).get(1).getCoordinate()
+                    )) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    private boolean IsLinePartsIntersected(Coordinate a, Coordinate b, Coordinate c, Coordinate d) {
+        double common = (b.getX() - a.getX())*(d.getY() - c.getY()) - (b.getY() - a.getY())*(d.getX() - c.getX());
+
+        if (common == 0) return false;
+
+        double rH = (a.getY() - c.getY())*(d.getX() - c.getX()) - (a.getX() - c.getX())*(d.getY() - c.getY());
+        double sH = (a.getY() - c.getY())*(b.getX() - a.getX()) - (a.getX() - c.getX())*(b.getY() - a.getY());
+
+        double r = rH / common;
+        double s = sH / common;
+
+        if (r >= 0 && r <= 1 && s >= 0 && s <= 1)
+            return true;
+        else
+            return false;
+    }
 }

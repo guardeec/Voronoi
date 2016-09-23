@@ -1,6 +1,6 @@
-package dataPrepare.data;
+package dataPrepare.data.triangulation;
 
-import java.util.List;
+import dataPrepare.data.graph.Host;
 
 /**
  * Created by guardeec on 28.06.16.
@@ -12,4 +12,5 @@ public interface TriangleVoronoiImpl {
     public void setFirstHost(Host host);
     public void setSecondHost(Host host);
     public void setThirdHost(Host host);
+
 }

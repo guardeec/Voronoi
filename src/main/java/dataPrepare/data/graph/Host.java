@@ -1,12 +1,14 @@
-package dataPrepare.data;
+package dataPrepare.data.graph;
+
+import java.util.Map;
 
 /**
  * Created by anna on 27.08.15.
  */
-public class Host implements HostImpl{
+public class Host{
     private int radius;
     private Coordinate coordinate;
-    private Object metrics;
+    private Map<String, Object> metrics;
 
     public Host() {
     }
@@ -64,4 +66,11 @@ public class Host implements HostImpl{
     }
 
 
+    public Object getMetrics() {
+        return metrics;
+    }
+
+    public void addMetric(String name, Object metric) {
+        this.metrics.put(name, metric);
+    }
 }

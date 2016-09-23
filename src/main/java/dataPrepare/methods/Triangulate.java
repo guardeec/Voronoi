@@ -1,8 +1,8 @@
-package dataPrepare.voronoi;
+package dataPrepare.methods;
 
-import dataPrepare.data.Graph;
-import dataPrepare.data.Host;
-import dataPrepare.data.Triangle;
+import dataPrepare.data.graph.Graph;
+import dataPrepare.data.graph.Host;
+import dataPrepare.data.triangulation.Triangle;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ public class Triangulate {
     генерация входного файла
      */
     private static String setInput(Graph graph){
+        System.out.println(graph.getHosts().size());
 
         /*
         входной файл состоит их пяти кортежей

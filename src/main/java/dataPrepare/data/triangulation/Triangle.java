@@ -1,4 +1,6 @@
-package dataPrepare.data;
+package dataPrepare.data.triangulation;
+
+import dataPrepare.data.graph.Host;
 
 public class Triangle implements TriangleDotsImpl, TriangleVoronoiImpl {
 
@@ -16,6 +18,15 @@ public class Triangle implements TriangleDotsImpl, TriangleVoronoiImpl {
         this.firstDot = firstDot;
         this.secondDot = secondDot;
         this.thirdDot = thirdDot;
+    }
+
+    public Triangle(Triangle triangle){
+        this.firstDot = triangle.getFirstDot();
+        this.secondDot = triangle.getSecondDot();
+        this.thirdDot = triangle.getThirdDot();
+        this.first = triangle.getFirstHost();
+        this.second = triangle.getSecondHost();
+        this.third = triangle.getThirdHost();
     }
 
     @Override

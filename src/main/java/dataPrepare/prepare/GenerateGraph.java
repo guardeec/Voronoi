@@ -1,10 +1,8 @@
 package dataPrepare.prepare;
 
-import dataPrepare.data.Coordinate;
-import dataPrepare.data.Graph;
-import dataPrepare.data.Host;
-
-import java.util.Random;
+import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Graph;
+import dataPrepare.data.graph.Host;
 
 /**
  * Created by anna on 27.08.15.

@@ -1,4 +1,6 @@
-package dataPrepare.data;
+package dataPrepare.data.voronoi;
+
+import dataPrepare.data.graph.Coordinate;
 
 /**
  * Created by Guardeec on 31.03.16.

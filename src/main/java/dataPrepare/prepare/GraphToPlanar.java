@@ -1,6 +1,6 @@
 package dataPrepare.prepare;
 
-import dataPrepare.data.Graph;
+import dataPrepare.data.graph.Graph;
 
 /**
  * Created by anna on 27.08.15.

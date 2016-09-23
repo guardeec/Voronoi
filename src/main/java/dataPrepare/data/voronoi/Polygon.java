@@ -1,7 +1,9 @@
-package dataPrepare.data;
+package dataPrepare.data.voronoi;
+
+import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Host;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 

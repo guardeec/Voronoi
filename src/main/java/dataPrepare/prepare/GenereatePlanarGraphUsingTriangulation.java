@@ -1,8 +1,12 @@
 package dataPrepare.prepare;
 
-import dataPrepare.data.*;
-import dataPrepare.voronoi.ConvexHull;
-import dataPrepare.voronoi.Triangulate;
+import dataPrepare.data.graph.Graph;
+import dataPrepare.data.triangulation.Triangle;
+import dataPrepare.data.triangulation.TriangleDotsImpl;
+import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Host;
+import dataPrepare.methods.ConvexHull;
+import dataPrepare.methods.Triangulate;
 
 import java.util.Iterator;
 import java.util.List;
@@ -26,7 +30,7 @@ public class GenereatePlanarGraphUsingTriangulation {
         if (coherence<0 || coherence>1){
             throw new IllegalArgumentException("coherence must be between 0 and 1");
         }
-        if (hostNumber<4){
+        if (hostNumber<1){
             throw new IllegalArgumentException("Number of Hosts must be > 4");
         }
         if ((frameSizeX+1)*(frameSizeY+1)<hostNumber){

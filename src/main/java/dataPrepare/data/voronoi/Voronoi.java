@@ -1,7 +1,15 @@
-package dataPrepare.data;
+package dataPrepare.data.voronoi;
 
-import dataPrepare.voronoi.ConvexHull;
-import dataPrepare.voronoi.Triangulate;
+import com.google.gson.Gson;
+import dataPrepare.Test2;
+import dataPrepare.data.Test;
+import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Graph;
+import dataPrepare.data.triangulation.TriangleDotsImpl;
+import dataPrepare.data.triangulation.TriangleVoronoiImpl;
+import dataPrepare.data.graph.Host;
+import dataPrepare.methods.ConvexHull;
+import dataPrepare.methods.Triangulate;
 
 import java.util.*;
 
@@ -76,12 +84,19 @@ public class Voronoi {
                     )
             );
         }
-        makeField(triangles, graph, this);
 
         graph.removeHost(LUHOST);
         graph.removeHost(LDHOST);
         graph.removeHost(RUHOST);
         graph.removeHost(RDHOST);
+
+        //////////////////////////////////////////////////////////////
+        //Test2.getInstance().setTriangles(triangles);
+        //////////////////////////////////////////////////////////////
+
+        makeField(triangles, graph, this);
+
+
     }
 
     public List<Polygon> getPolygons(){
@@ -125,16 +140,16 @@ public class Voronoi {
         float LD = getDistance(coordinate, new Coordinate(0,0));
         float RU = getDistance(coordinate, new Coordinate(x,y));
         float RD = getDistance(coordinate, new Coordinate(x,0));
-        if (LU>LD && LU>RU && LU>RD){
+        if (LU>=LD && LU>=RU && LU>=RD){
             return "LU";
         }
-        if (LD>LU && LD>RU && LD>RD){
+        if (LD>=LU && LD>=RU && LD>=RD){
             return "LD";
         }
-        if (RU>LD && RU>LU && RU>RD){
+        if (RU>=LD && RU>=LU && RU>=RD){
             return "RU";
         }
-        if (RD>LU && RD>LD && RD>RU){
+        if (RD>=LU && RD>=LD && RD>=RU){
             return "RD";
         }
         System.out.println(111);
@@ -142,12 +157,24 @@ public class Voronoi {
     }
 
     private void addPolygon(Polygon polygon){
-        if (polygon.getPoints().size()>=3){
-            this.polygons.add(polygon);
-            for (Coordinate coordinate : polygon.getPoints()){
-                this.dots.add(coordinate);
+
+
+        for (int i=0; i<polygon.getPoints().size(); i++){
+
+            boolean contains = false;
+            for (Coordinate dot : dots){
+                if (Math.round(dot.getX())==Math.round(polygon.getPoints().get(i).getX())&&Math.round(dot.getY())==Math.round(polygon.getPoints().get(i).getY())){
+                    contains = true;
+                    polygon.getPoints().set(i, dot);
+                }
             }
+            if (!contains){
+                this.dots.add(polygon.getPoints().get(i));
+            }
+
         }
+        this.polygons.add(polygon);
+
 
     }
     

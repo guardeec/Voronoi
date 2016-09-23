@@ -1,4 +1,4 @@
-package dataPrepare.data;
+package dataPrepare.data.triangulation;
 
 /**
  * Created by guardeec on 28.06.16.

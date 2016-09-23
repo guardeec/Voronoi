@@ -1,11 +1,12 @@
-package dataPrepare.voronoi;
+package dataPrepare.methods;
 
-import dataPrepare.data.Coordinate;
-import dataPrepare.data.Graph;
-import dataPrepare.data.Host;
+import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Graph;
+import dataPrepare.data.graph.Host;
 
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * Created by anna on 28.08.15.
@@ -137,6 +138,7 @@ public class ConvexHull {
             );
             points.add(i, e);
         }
+
         ConvexHull qh = new ConvexHull();
 
         ArrayList<Point> p = qh.quickHull(points);
@@ -154,17 +156,34 @@ public class ConvexHull {
         return hosts;
     }
 
-    /*
-    Получить выпукулю оболочку
-     */
-//    public static Graph getHull(Graph graph) {
-//        ArrayList<Host> hull = ConvexHull.get(graph);
-//        Graph graphWithHull = new Graph();
-//        for (int i=0; i<hull.size(); i++){
-//            graphWithHull.setHost(graph.getHost(hull.get(i)));
-//        }
-//        return graphWithHull;
-//    }
+
+    public static java.util.List<Coordinate> getFromCoordinates(List<Coordinate> coordinates) {
+        ArrayList<Point> points = new ArrayList<Point>();
+        for (Coordinate coordinate : coordinates) {
+            Point e = new Point(
+                    Math.round(coordinate.getX()),
+                    Math.round(coordinate.getY())
+            );
+            points.add(e);
+        }
+
+        ConvexHull qh = new ConvexHull();
+
+        List<Point> p = qh.quickHull(points);
+        List<Coordinate> convexHull = new ArrayList<>();
+        for (Point point : p){
+            convexHull.add(getCoordinatesFromList(coordinates, point.getX(), point.getY()));
+        }
+        return convexHull;
+    }
+    private static Coordinate getCoordinatesFromList(List<Coordinate> coordinates, double x, double y){
+        for (Coordinate coordinate : coordinates){
+            if (Math.round(coordinate.getX())==x && Math.round(coordinate.getY())==y){
+                return coordinate;
+            }
+        }
+        return null;
+    }
 
     /*
     изменяет граф, добавляя в его свзяи выпуклую оболочку
@@ -182,12 +201,13 @@ public class ConvexHull {
 
     private static Host getHostByCoordinate(Graph graph, Coordinate coordinate){
         for (Host host : graph.getHosts()){
-            if (host.getCoordinate().getX() == coordinate.getX() &&
-                    host.getCoordinate().getY() == coordinate.getY()
+            if (Math.round(host.getCoordinate().getX()) == Math.round(coordinate.getX()) &&
+                    Math.round(host.getCoordinate().getY()) == Math.round(coordinate.getY())
                     ){
                 return host;
             }
         }
+        System.out.println("fail");
         return null;
     }
 

@@ -1,51 +1,40 @@
-package dataPrepare.data;
+package dataPrepare.draw;
 
 /**
  * Created by anna on 02.09.15.
  */
-public class Coordinate{
+public class Coordinate implements CoordinateVoronoiImpl{
     private float x;
     private float y;
+    private int hash;
+    private int charge;
+    private boolean stop;
 
-    public Coordinate(float x, float y){
-        this.x = x;
-        this.y = y;
-    }
-    public Coordinate(Coordinate coordinate){
-        this.x = coordinate.getX();
-        this.y = coordinate.getY();
-    }
 
+    @Override
     public void setX(float x){
         this.x = x;
     }
+    @Override
     public void setY(float y){
         this.y = y;
     }
+    @Override
     public float getX(){
         return this.x;
     }
+    @Override
     public float getY(){
         return this.y;
     }
-    public void changeX(float value){
-        this.x+=value;
-    }
-    public void changeY(float value){
-        this.y+=value;
-    }
-    public void multiplyX(float value){
-        this.x*=value;
-    }
-    public void multiplyY(float value){
-        this.y*=value;
-    }
 
-    public boolean contains(Coordinate coordinate){
-        if (x==coordinate.getX() && y==coordinate.getY()){
-            return  true;
-        }
-        else return false;
+    @Override
+    public void setHash(int hash) {
+        this.hash = hash;
+    }
+    @Override
+    public int getHash() {
+        return hash;
     }
 
     @Override
@@ -56,7 +45,6 @@ public class Coordinate{
         result = prime*result + (int) this.getY();
         return result;
     }
-
     @Override
     public boolean equals(Object obj) {
         if (obj==null){
@@ -71,5 +59,4 @@ public class Coordinate{
         Coordinate coordinate = (Coordinate) obj;
         return this.getX() == coordinate.getX() && this.getY() == coordinate.getY();
     }
-
 }
