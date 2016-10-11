@@ -22,8 +22,8 @@ public class GenerateGraph {
             graph.setHost(
                     new Host(
                             1, new Coordinate(
-                                hostPositions[i][0],
-                                hostPositions[i][1]
+                                hostPositions[i][0]*22,
+                                hostPositions[i][1]*22
                             )
                     )
             );

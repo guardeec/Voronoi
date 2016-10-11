@@ -84,6 +84,11 @@ public class GenereatePlanarGraphUsingTriangulation {
             }
             counter++;
         }
+
+        for (int i=0; i<graph.getHosts().size(); i++){
+            graph.getHosts().get(i).addMetric("id", i);
+        }
+
         return graph;
     }
 

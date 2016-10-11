@@ -1,19 +1,33 @@
 package dataPrepare.data.graph;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by anna on 02.09.15.
  */
 public class Coordinate{
     private float x;
     private float y;
+    private Map<String, Object> metric;
 
     public Coordinate(float x, float y){
         this.x = x;
         this.y = y;
+        metric = new HashMap<>();
     }
     public Coordinate(Coordinate coordinate){
         this.x = coordinate.getX();
         this.y = coordinate.getY();
+        metric = new HashMap<>();
+    }
+
+    public void addMetric(String name, Object object){
+        metric.put(name, object);
+    }
+    public Object getMetric(String name){
+        Object object = this.metric.get(name);
+        return object;
     }
 
     public void setX(float x){

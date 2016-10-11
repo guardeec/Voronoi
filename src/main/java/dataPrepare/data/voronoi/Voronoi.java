@@ -2,7 +2,10 @@ package dataPrepare.data.voronoi;
 
 import com.google.gson.Gson;
 import dataPrepare.Test2;
+import dataPrepare.data.Dejkstra;
 import dataPrepare.data.Test;
+import dataPrepare.data.TestD3;
+import dataPrepare.data.TestPolymorph;
 import dataPrepare.data.graph.Coordinate;
 import dataPrepare.data.graph.Graph;
 import dataPrepare.data.triangulation.TriangleDotsImpl;
@@ -23,15 +26,169 @@ public class Voronoi {
     private List<Coordinate> dots;
     private Graph graph;
 
-    public Voronoi(Graph graph, float frameSizeX, float frameSizeY){
+    private float fx, fy;
+
+
+    public Voronoi(Graph graph, float frameSizeX, float frameSizeY, Polygon incapsulation){
         this.graph = graph;
         this.polygons = new LinkedList<>();
         this.dots = new LinkedList<>();
         this.separators = new LinkedList<>();
 
         graph = ConvexHull.make(graph);
-        List<Host> convexHullHosts = ConvexHull.get(graph);
 
+        List<Host> boxHosts = addBox(graph, frameSizeX, frameSizeY);
+
+        ArrayList<TriangleVoronoiImpl> triangles = Triangulate.make(graph);
+        for (TriangleVoronoiImpl triangle:triangles){
+            TriangleDotsImpl triangleAsDots = (TriangleDotsImpl) triangle;
+            triangle.setFirstHost(
+                    graph.getHosts().get(
+                            triangleAsDots.getFirstDot()
+                    )
+            );
+            triangle.setSecondHost(
+                    graph.getHosts().get(
+                            triangleAsDots.getSecondDot()
+                    )
+            );
+            triangle.setThirdHost(
+                    graph.getHosts().get(
+                            triangleAsDots.getThirdDot()
+                    )
+            );
+        }
+
+        makeField(triangles, graph, this);
+
+        for (Host host : boxHosts){
+            graph.removeHost(host);
+        }
+
+        if (incapsulation==null){
+
+
+
+
+            List<Polygon> polygonsList = polygons;
+            for (Coordinate coordinate : this.getDots()){
+                coordinate.addMetric("stop", false);
+            }
+
+            boolean flag = false;
+            while (!flag){
+
+                Collections.shuffle(polygonsList);
+                for (Coordinate coordinate : this.getDots()){
+                    coordinate.addMetric("stop", false);
+                }
+
+                for (Polygon polygon : polygonsList){
+                    int freeDots = 0;
+                    for (Coordinate coordinate : polygon.getPoints()){
+                        boolean stop = (boolean) coordinate.getMetric("stop");
+                        if (!stop){
+                            freeDots++;
+                        }
+                    }
+                    if (freeDots==0){
+                        break;
+                    }
+                    if (freeDots!=0 && polygon==polygonsList.get(polygonsList.size()-1)){
+                        flag = true;
+                        break;
+                    }
+                    if (freeDots!=0){
+                        for (Coordinate coordinate : polygon.getPoints()){
+                            coordinate.addMetric("stop", true);
+                        }
+                    }
+                }
+            }
+
+
+        }
+
+    }
+
+    private List<Coordinate> getConvegHullOfVoronoi(List<Polygon> polygons){
+        List<Coordinate> dots = new LinkedList<>();
+        for (Polygon polygon : polygons){
+            for (Coordinate coordinate : polygon.getPoints()){
+                if (!dots.contains(coordinate)){
+                    dots.add(coordinate);
+                }
+            }
+        }
+
+        List<Coordinate> convexHull = ConvexHull.getFromCoordinates(dots);
+
+        List<List<Coordinate>> edgesOfConvexHull = new LinkedList<>();
+        for (int i=0;i<convexHull.size(); i++){
+            List<Coordinate> edge = new LinkedList<>();
+            edge.add(convexHull.get(i));
+            edge.add(convexHull.get((i+1)%convexHull.size()));
+            edgesOfConvexHull.add(edge);
+        }
+
+        List<List<Coordinate>> edgesOfVoronoi = new LinkedList<>();
+        for (List<Host> edge : this.voronoiLikeAGraph(polygons).getEdges()){
+            List<Coordinate> edgeOfVoronoi = new LinkedList<>();
+            edgeOfVoronoi.add(edge.get(0).getCoordinate());
+            edgeOfVoronoi.add(edge.get(1).getCoordinate());
+            edgesOfVoronoi.add(edgeOfVoronoi);
+        }
+        Iterator<List<Coordinate>> edgeInterator = edgesOfConvexHull.iterator();
+        while (edgeInterator.hasNext()){
+            List<Coordinate> edgeOfConvexHull = edgeInterator.next();
+            for (List<Coordinate> edgeOfVoronoi : edgesOfVoronoi){
+                if (
+                        (edgeOfVoronoi.get(0).equals(edgeOfConvexHull.get(0))&&edgeOfVoronoi.get(1).equals(edgeOfConvexHull.get(1)))
+                                ||
+                                (edgeOfVoronoi.get(0).equals(edgeOfConvexHull.get(1))&&edgeOfVoronoi.get(1).equals(edgeOfConvexHull.get(0)))
+                        ){
+                    edgeInterator.remove();
+                }
+            }
+        }
+
+
+        for (List<Coordinate> edge : edgesOfConvexHull){
+            Dejkstra dejkstra = new Dejkstra(dots, edgesOfVoronoi);
+            dejkstra.execute(edge.get(0));
+            List<Coordinate> path = dejkstra.getPath(edge.get(1), dots);
+
+            if (convexHull.contains(path.get(0))){
+                int index = convexHull.indexOf(path.get(0));
+                path.remove(path.size()-1);
+                path.remove(0);
+                convexHull.addAll(index+1, path);
+            }
+
+            for (Coordinate coordinate : path){
+                Coordinate first = edge.get(0);
+                Coordinate second = edge.get(1);
+                float distanceToLine = Math.abs(
+                        ((second.getX()-first.getX())*(coordinate.getY()-first.getY())-(second.getY()-first.getY())*(coordinate.getX()-first.getX()))
+                                /
+                                (float) Math.sqrt(Math.pow(second.getX()-first.getX(),2)+Math.pow(second.getY()-first.getY(),2))
+                );
+                float distanceToStartDot = distanceBetweenCoordinates(coordinate, first);
+            }
+
+        }
+
+
+        return convexHull;
+    }
+
+    private float distanceBetweenCoordinates(Coordinate coordinate1, Coordinate coordinate2){
+        return (float) Math.sqrt( Math.pow(coordinate1.getX()-coordinate2.getX(), 2) + Math.pow(coordinate1.getY()-coordinate2.getY(), 2));
+    }
+
+
+    private List<Host> addBox(Graph graph, float frameSizeX, float frameSizeY){
+        List<Host> convexHullHosts = ConvexHull.get(graph);
         Host LUHOST = new Host(1, new Coordinate(0,frameSizeY));
         Host LDHOST = new Host(1, new Coordinate(0,0));
         Host RUHOST = new Host(1, new Coordinate(frameSizeX,frameSizeY));
@@ -65,6 +222,27 @@ public class Voronoi {
             }
         }
 
+        List<Host> boxHosts = new LinkedList<>();
+        boxHosts.add(LUHOST);
+        boxHosts.add(LDHOST);
+        boxHosts.add(RUHOST);
+        boxHosts.add(RDHOST);
+        return boxHosts;
+    }
+
+    public Voronoi(Graph graph, float frameSizeX, float frameSizeY){
+        this.graph = graph;
+        this.polygons = new LinkedList<>();
+        this.dots = new LinkedList<>();
+        this.separators = new LinkedList<>();
+        //opt
+        fx = frameSizeX;
+        fy = frameSizeY;
+
+        graph = ConvexHull.make(graph);
+
+        List<Host> boxHosts = addBox(graph, frameSizeX, frameSizeY);
+
         ArrayList<TriangleVoronoiImpl> triangles = Triangulate.make(graph);
         for (TriangleVoronoiImpl triangle:triangles){
             TriangleDotsImpl triangleAsDots = (TriangleDotsImpl) triangle;
@@ -85,18 +263,143 @@ public class Voronoi {
             );
         }
 
-        graph.removeHost(LUHOST);
-        graph.removeHost(LDHOST);
-        graph.removeHost(RUHOST);
-        graph.removeHost(RDHOST);
-
-        //////////////////////////////////////////////////////////////
-        //Test2.getInstance().setTriangles(triangles);
-        //////////////////////////////////////////////////////////////
-
         makeField(triangles, graph, this);
+        for (Host host : boxHosts){
+            graph.removeHost(host);
+        }
 
 
+
+
+
+        for (Coordinate coordinate : dots){
+            coordinate.addMetric("stopPolymorph", false);
+        }
+
+
+        for (Coordinate coordinate : dots){
+            coordinate.addMetric("fixed", false);
+        }
+        List<Coordinate> ring = getConvegHullOfVoronoi(polygons);
+        for (Coordinate coordinate : ring){
+            coordinate.addMetric("fixed", true);
+        }
+        //new TestD3().force_INPUT(this);
+        new TestD3().force_OUTPUT(this, TestD3.exp2JSON());
+        List<Polygon> polygonsDeepOne = new LinkedList<>();
+        for (Polygon polygon : polygons){
+            if ((int)polygon.getHost().getMetrics().get("deep")==1){
+                polygonsDeepOne.add(polygon);
+            }
+        }
+        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+        new TestD3().force_INPUT(this);
+
+        //TODO
+//        calcDeep();
+//        int deep = getDeepOfVoronoi();
+//        while (deep>=0){
+//            List<Polygon> polygons = new LinkedList<>();
+//            for (Polygon polygon : this.polygons){
+//                if (((int)polygon.getHost().getMetrics().get("deep"))==deep){
+//                    polygons.add(polygon);
+//                }
+//            }
+//            boolean flag = false;
+//            List<Coordinate> dots = new LinkedList<>();
+//            for (Polygon polygon : polygons){
+//                for (Coordinate coordinate : polygon.getPoints()){
+//                    if (!dots.contains(coordinate)){
+//                        dots.add(coordinate);
+//                    }
+//                }
+//            }
+//            while (!flag){
+//                for (Coordinate coordinate : dots){
+//                    coordinate.addMetric("stop", false);
+//                }
+//                for (Polygon polygon : polygons){
+//                    int freeDots = 0;
+//                    for (Coordinate coordinate : polygon.getPoints()){
+//                        boolean stop = (boolean) coordinate.getMetric("stop");
+//                        if (!stop){
+//                            freeDots++;
+//                        }
+//                    }
+//                    if (freeDots==0){
+//                        break;
+//                    }
+//                    if (freeDots!=0 && polygon==polygons.get(polygons.size()-1)){
+//                        System.out.println("OK");
+//                        flag = true;
+//                        break;
+//                    }
+//                    if (freeDots!=0){
+//                        for (Coordinate coordinate : polygon.getPoints()){
+//                            coordinate.addMetric("stop", true);
+//                        }
+//                    }
+//                }
+//                //TODO
+//                //нужно заменить рандом на че то умное
+//                Collections.shuffle(polygons);
+//            }
+//            for (Coordinate coordinate : dots){
+//                coordinate.addMetric("stop", true);
+//            }
+//
+//            if (deep>=getDeepOfVoronoi()-1){
+//
+//                List<Polygon> polygonListSortedByOrder = new LinkedList<>();
+//                for (Polygon polygon : polygons){
+//                    polygonListSortedByOrder.add(polygon);
+//                }
+//                polygonListSortedByOrder.sort((o1, o2) -> {
+//                    if ((float)o1.getHost().getMetrics().get("order")<(float)o2.getHost().getMetrics().get("order")){
+//                        return -1;
+//                    }else {
+//                        return 1;
+//                    }
+//                });
+//                new TestPolymorph().polymorph(polygonListSortedByOrder, this);
+//            }
+//            deep--;
+//        }
+    }
+
+    private void calcDeep(){
+        int counter = 0;
+        List<Polygon> polygonsToAnalyse = new LinkedList<>();
+        for (Polygon polygon : polygons){
+            polygonsToAnalyse.add(polygon);
+        }
+        while (polygonsToAnalyse.size()>0){
+
+            List<Coordinate> convexHull = getConvegHullOfVoronoi(polygonsToAnalyse);
+            List<Polygon> chPolygons = new LinkedList<>();
+            for (Polygon polygon : polygonsToAnalyse){
+                for (Coordinate coordinate : convexHull){
+                    if (polygon.getPoints().contains(coordinate)){
+                        polygon.getHost().addMetric("deep", counter);
+                        chPolygons.add(polygon);
+                        break;
+                    }
+                }
+            }
+            polygonsToAnalyse.removeAll(chPolygons);
+            counter++;
+            //analysedDots.removeAll(convexHull);
+        }
+    }
+
+    public int getDeepOfVoronoi(){
+        int i=0;
+        for (Polygon polygon : polygons){
+            if (((int)polygon.getHost().getMetrics().get("deep"))>i){
+                i=(int)polygon.getHost().getMetrics().get("deep");
+            }
+        }
+        return i;
     }
 
     public List<Polygon> getPolygons(){
@@ -126,11 +429,40 @@ public class Voronoi {
             for (int i=0; i<polygon.getPoints().size(); i++){
                 Host from = getHostFromCoordinates(graph, polygon.getPoints().get(i%polygon.getPoints().size()));
                 Host to = getHostFromCoordinates(graph, polygon.getPoints().get((i+1)%polygon.getPoints().size()));
+                if (!(graph.getRelations().get(from).contains(to) || graph.getRelations(to).contains(from))){
+                    graph.setRelation(from, to);
+                }
+
+            }
+        }
+        return graph;
+    }
+
+
+    public Graph voronoiLikeAGraph(List<Polygon> polygons){
+        Graph graph = new Graph();
+
+        Set<Coordinate> coordinateSet = new HashSet<>();
+        for (Polygon polygon : polygons){
+            for (Coordinate coordinate : polygon.getPoints()){
+                coordinateSet.add(coordinate);
+            }
+        }
+
+        for (Coordinate coordinate : coordinateSet){
+            graph.setHost(new Host(1, coordinate));
+        }
+
+        for (Polygon polygon : polygons){
+            for (int i=0; i<polygon.getPoints().size(); i++){
+                Host from = getHostFromCoordinates(graph, polygon.getPoints().get(i%polygon.getPoints().size()));
+                Host to = getHostFromCoordinates(graph, polygon.getPoints().get((i+1)%polygon.getPoints().size()));
                 graph.setRelation(from, to);
             }
         }
         return graph;
     }
+
     public Graph getGraph() {
         return graph;
     }
@@ -152,7 +484,6 @@ public class Voronoi {
         if (RD>=LU && RD>=LD && RD>=RU){
             return "RD";
         }
-        System.out.println(111);
         return null;
     }
 

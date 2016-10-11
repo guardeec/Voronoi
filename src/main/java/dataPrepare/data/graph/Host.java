@@ -1,5 +1,6 @@
 package dataPrepare.data.graph;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -15,10 +16,12 @@ public class Host{
     public Host(int radius, Coordinate coordinate) {
         this.radius = radius;
         this.coordinate = coordinate;
+        metrics = new HashMap<>();
     }
     public Host(Host host){
         this.radius = host.getRadius();
         this.coordinate = new Coordinate(host.getCoordinate());
+        metrics = new HashMap<>();
     }
 
     public int getRadius() {
@@ -66,7 +69,7 @@ public class Host{
     }
 
 
-    public Object getMetrics() {
+    public Map<String, Object> getMetrics() {
         return metrics;
     }
 
