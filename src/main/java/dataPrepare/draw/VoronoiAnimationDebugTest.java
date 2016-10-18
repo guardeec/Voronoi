@@ -24,7 +24,7 @@ public class VoronoiAnimationDebugTest extends Application {
     int counter = 0;
     Group group;
     private long lastUpdate = 0 ;
-    private long tickTime = 502795720/30;
+    private long tickTime = 502795720/300;
     BufferedReader in;
     StringBuilder sb;
     Gson gson = new Gson();
@@ -35,27 +35,19 @@ public class VoronoiAnimationDebugTest extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
         group = new Group();
         Scene scene = new Scene(group, 1000, 1000);
 
-
-
         sb = new StringBuilder();
         File file = new File("test");
-
         try {
             in = new BufferedReader(new FileReader( file.getAbsoluteFile()));
-
         } catch(IOException e) {
             throw new RuntimeException(e);
         }
 
-
         AnimationTimer timer = new MyTimer();
         timer.start();
-
-
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -84,7 +76,7 @@ public class VoronoiAnimationDebugTest extends Application {
                 }else {
                     circle.setFill(Color.GRAY);
                 }
-                if (polygon.getPoints().get(i).getMetric("BLUE")!=null){
+                if ((boolean)polygon.getPoints().get(i).getMetric("BLUE")){
                     Circle circle1 = new Circle();
                     circle1.setCenterX(polygon.getPoints().get(i).getX());
                     circle1.setCenterY(polygon.getPoints().get(i).getY());
@@ -93,14 +85,12 @@ public class VoronoiAnimationDebugTest extends Application {
                     group.getChildren().add(circle1);
                 }
                 group.getChildren().add(circle);
-
             }
         }
     }
 
 
     private class MyTimer extends AnimationTimer {
-
         @Override
         public void handle(long now) {
             if (now - lastUpdate >= tickTime) {
@@ -111,7 +101,6 @@ public class VoronoiAnimationDebugTest extends Application {
         }
 
         private void doHandle() {
-
             String s= null;
             try {
                 s = in.readLine();
@@ -122,7 +111,7 @@ public class VoronoiAnimationDebugTest extends Application {
             }
             List list =gson.fromJson(s, List.class);
             List<Polygon> polygonList = new LinkedList<>();
-            for (Object o : list){
+           for (Object o : list){
                 String p = gson.toJson(o);
                 Polygon polygon = gson.fromJson(p, Polygon.class);
                 polygonList.add(polygon);
@@ -131,5 +120,4 @@ public class VoronoiAnimationDebugTest extends Application {
             counter++;
         }
     }
-
 }

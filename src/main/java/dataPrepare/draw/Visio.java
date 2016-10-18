@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import dataPrepare.*;
 import dataPrepare.Test2;
 import dataPrepare.data.Test;
+import dataPrepare.data.TestD3;
 import dataPrepare.data.TestPolymorph;
 import dataPrepare.data.graph.Graph;
 import dataPrepare.data.graph.Coordinate;
@@ -52,18 +53,26 @@ public class Visio extends Application {
 
         Graph graph;
         graph = GenerateGraph.generateConstantGraph();
+
         addMetric(graph);
+        //new TestD3().force_INPUT(graph);
+        new TestD3().force_OUTPUT(graph, TestD3.getGraph());
+        drawGraph(graph, group, 1);
 
         SaveVoronoi.getInstance().startSaving("test");
         Voronoi voronoi = new Voronoi(graph, frameSizeX, frameSizeY);
+        drawVoronoi(voronoi, group);
         SaveVoronoi.getInstance().endSaving();
 
-        drawVoronoi(voronoi, group);
+
+        //drawGraph(graph,group, 0);
+        //drawGraph(voronoi.voronoiLikeAGraph(voronoi),group, 0);
+        //drawVoronoi(voronoi, group);
         //drawVoronoiTest(voronoi, group);
 
-        List<List<dataPrepare.data.voronoi.Polygon>> polygons = new LinkedList<>();
-        polygons.add(voronoi.getPolygons());
-        polygons.add(voronoi.getPolygons());
+        //List<List<dataPrepare.data.voronoi.Polygon>> polygons = new LinkedList<>();
+        //polygons.add(voronoi.getPolygons());
+        //polygons.add(voronoi.getPolygons());
 
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -73,7 +82,7 @@ public class Visio extends Application {
     private void addMetric(Graph graph){
         int i=0;
         for (Host host : graph.getHosts()){
-            host.addMetric("cellSize", 2000f);
+            host.addMetric("cellSize", 3000f);
             host.addMetric("id", i);
             host.addMetric("order", Float.parseFloat(getOrder(i)));
             host.addMetric("deep", getDeep(i));
@@ -84,123 +93,184 @@ public class Visio extends Application {
     private Integer getDeep(int i){
         switch (i){
             case 41:{return 0;}
+            case 6:{return 0;}
+            case 43:{return 0;}
+            case 7:{return 0;}
+            case 40:{return 0;}
+            case 22:{return 0;}
+            case 18:{return 0;}
+            case 1:{return 0;}
+            case 2:{return 0;}
+
+            case 39:{return 1;}
+            case 5: {return 1;}
+            case 36:{return 1;}
+            case 38:{return 1;}
+            case 23:{return 1;}
+            case 3: {return 1;}
+            case 21:{return 1;}
+            case 4: {return 1;}
+            case 17:{return 1;}
+            case 16:{return 1;}
+            case 14:{return 1;}
+            case 15:{return 1;}
+            case 12:{return 1;}
+            case 13:{return 1;}
+            case 0: {return 1;}
+            case 42:{return 1;}
+            case 37:{return 1;}
             case 35:{return 1;}
-            case 42:{return 2;}
-            case 15:{return 3;}
-            case 12:{return 4;}
-            case 38:{return 5;}
 
-            case 29:{return 0;}
-            case 40:{return 1;}
-            case 24:{return 2;}
-            case 1:{return  3;}
-            case 11:{return 4;}
-            case 14:{return 5;}
-
-            case 28:{return 0;}
-            case 7:{return  1;}
-            case 23:{return 2;}
-            case 8:{return  3;}
-            case 0:{return  4;}
-            case 13:{return 5;}
-
-            case 2:{return  1;}
+            case 9:{return 2;}
+            case 10:{return 2;}
+            case 28:{return 2;}
+            case 25:{return 2;}
+            case 27:{return 2;}
+            case 29:{return 2;}
             case 26:{return 2;}
-            case 17:{return 3;}
-            case 36:{return 4;}
-            case 10:{return 5;}
+            case 24:{return 2;}
+            case 20:{return 2;}
+            case 19:{return 2;}
+            case 32:{return 2;}
+            case 31:{return 2;}
+            case 30:{return 2;}
+            case 34:{return 2;}
+            case 33:{return 2;}
+            case 11:{return 2;}
+            case 8:{return 2;}
 
-            case 4:{return 1;}
-            case 43:{return 2;}
-            case 18:{return 3;}
-            case 34:{return 4;}
-            case 9:{return 5;}
 
-            case 27:{return 1;}
-            case 16:{return 2;}
-            case 19:{return 3;}
-            case 20:{return 5;}
-
-            case 30:{return 1;}
-            case 3:{return 3;}
-            case 21:{return 5;}
-
-            case 22:{return 3;}
-            case 32:{return 5;}
-
-            case 25:{return 3;}
-            case 33:{return 5;}
-
-            case 31:{return 3;}
-            case 37:{return 5;}
-
-            case 5:{return 3;}
-
-            case 6:{return 3;}
-
-            case 39:{return 3;}
         }
         return null;
     }
 
     private String getOrder(int i){
+//        switch (i){
+//            case 41:{return "1";}
+//            case 39:{return "1";}
+//            case 9:{return "1";}
+//
+//            case 6:{return "2";}
+//            case 5:{return "2";}
+//            case 10:{return "2";}
+//
+//            case 43:{return "3";}
+//            case 36:{return "3";}
+//            case 28:{return "3";}
+//
+//            case 7:{return "4";}
+//            case 38:{return "4";}
+//            case 25:{return "4";}
+//
+//            case 40:{return "5";}
+//            case 23:{return "5";}
+//            case 27:{return "5";}
+//
+//            case 22:{return "6";}
+//            case 3:{return "6";}
+//            case 29:{return "6";}
+//
+//            case 18:{return "7";}
+//            case 21:{return "7";}
+//            case 26:{return "7";}
+//
+//            case 1:{return "8";}
+//            case 4:{return "8";}
+//            case 24:{return "8";}
+//
+//            case 2:{return "9";}
+//            case 17:{return "9";}
+//            case 20:{return "9";}
+//
+//            case 16:{return "10";}
+//            case 19:{return "10";}
+//
+//            case 14:{return "11";}
+//            case 32:{return "11";}
+//
+//            case 15:{return "12";}
+//            case 31:{return "12";}
+//
+//            case 12:{return "13";}
+//            case 30:{return "13";}
+//
+//            case 13:{return "14";}
+//            case 34:{return "14";}
+//
+//            case 0:{return "15";}
+//            case 33:{return "15";}
+//
+//            case 42:{return "16";}
+//            case 11:{return "16";}
+//
+//            case 37:{return "17";}
+//            case 8:{return "17";}
+//
+//            case 35:{return "18";}
+//        }
+
         switch (i){
-            case 41:{return "1";}
-            case 35:{return "1";}
-            case 42:{return "1";}
-            case 15:{return "1";}
-            case 12:{return "1";}
-            case 38:{return "1";}
+            case 7:{return "1";}
+            case 39:{return "1";}
+            case 9:{return "1";}
 
-            case 29:{return "2";}
-            case 40:{return "2";}
-            case 24:{return "2";}
-            case 1:{return "2";}
-            case 11:{return "2";}
-            case 14:{return "2";}
+            case 43:{return "2";}
+            case 5:{return "2";}
+            case 10:{return "2";}
 
+            case 1:{return "3";}
+            case 36:{return "3";}
             case 28:{return "3";}
-            case 7:{return "3";}
-            case 23:{return "3";}
-            case 8:{return "3";}
-            case 0:{return "3";}
-            case 13:{return "3";}
 
             case 2:{return "4";}
-            case 26:{return "4";}
-            case 17:{return "4";}
-            case 36:{return "4";}
-            case 10:{return "4";}
+            case 38:{return "4";}
+            case 25:{return "4";}
 
-            case 4:{return "5";}
-            case 43:{return "5";}
             case 18:{return "5";}
-            case 34:{return "5";}
-            case 9:{return "5";}
+            case 23:{return "5";}
+            case 27:{return "5";}
 
-            case 27:{return "6";}
-            case 16:{return "6";}
-            case 19:{return "6";}
-            case 20:{return "6";}
+            case 22:{return "6";}
+            case 3:{return "6";}
+            case 29:{return "6";}
 
-            case 30:{return "7";}
-            case 3:{return "7";}
+            case 40:{return "7";}
             case 21:{return "7";}
+            case 26:{return "7";}
 
-            case 22:{return "8";}
-            case 32:{return "8";}
+            case 6:{return "8";}
+            case 4:{return "8";}
+            case 24:{return "8";}
 
-            case 25:{return "9";}
-            case 33:{return "9";}
+            case 41:{return "9";}
+            case 17:{return "9";}
+            case 20:{return "9";}
 
-            case 31:{return "10";}
-            case 37:{return "10";}
+            case 16:{return "10";}
+            case 19:{return "10";}
 
-            case 5:{return "11";}
+            case 14:{return "11";}
+            case 32:{return "11";}
 
-            case 6:{return "12";}
+            case 15:{return "12";}
+            case 31:{return "12";}
 
-            case 39:{return "13";}
+            case 12:{return "13";}
+            case 30:{return "13";}
+
+            case 13:{return "14";}
+            case 34:{return "14";}
+
+            case 0:{return "15";}
+            case 33:{return "15";}
+
+            case 42:{return "16";}
+            case 11:{return "16";}
+
+            case 37:{return "17";}
+            case 8:{return "17";}
+
+            case 35:{return "18";}
         }
         return null;
     }
@@ -244,7 +314,7 @@ public class Visio extends Application {
                 points[1] = (double) cellCoordinates.getY();
                 polygon.getPoints().addAll(points);
                 polygon.setFill(colors[(int)cell.getHost().getMetrics().get("deep")]);
-                //polygon.setOpacity(1f/(Float)cell.getHost().getMetrics().get("order"));
+                //polygon.setOpacity(1f-(Float)cell.getHost().getMetrics().get("order")*0.1);
                 polygon.setOpacity(1);
             }
             polygon.setOnMouseClicked(event -> {
@@ -269,152 +339,4 @@ public class Visio extends Application {
         return group;
     }
 
-
-
-    private Group drawVoronoiTest(Voronoi voronoi, Group group){
-        for (Coordinate coordinate : voronoi.getDots()){
-            Circle circle = new Circle();
-            circle.setCenterX(coordinate.getX());
-            circle.setCenterY(coordinate.getY());
-            circle.setRadius(5);
-            circle.setOnMouseDragged(event -> {
-                double previosPositionX = circle.getCenterX();
-                double previosPositionY = circle.getCenterY();
-                double xPadding = event.getX()-previosPositionX;
-                double yPadding = event.getY()-previosPositionY;
-                //TODO
-                //обработка силового смещения
-
-                //RIGHT
-                if (event.getX()-previosPositionX>0){
-                    for (int i=0; i<group.getChildren().size(); i++){
-                        if (group.getChildren().get(i).getClass().equals(Circle.class)){
-                            if (((Circle) group.getChildren().get(i)).getCenterX()>previosPositionX){
-                                redrawVoronoy(
-                                        (Circle) group.getChildren().get(i),
-                                        ((Circle) group.getChildren().get(i)).getCenterX()+xPadding,
-                                        ((Circle) group.getChildren().get(i)).getCenterY()+yPadding,
-                                        group
-                                        );
-                            }
-                        }
-                    }
-                }
-                //LEFT
-                if (event.getX()-previosPositionX<0){
-                    for (int i=0; i<group.getChildren().size(); i++){
-                        if (group.getChildren().get(i).getClass().equals(Circle.class)){
-                            if (((Circle) group.getChildren().get(i)).getCenterX()<previosPositionX){
-                                redrawVoronoy(
-                                        (Circle) group.getChildren().get(i),
-                                        ((Circle) group.getChildren().get(i)).getCenterX()+xPadding,
-                                        ((Circle) group.getChildren().get(i)).getCenterY()+yPadding,
-                                        group
-                                );
-                            }
-                        }
-                    }
-                }
-                //UP
-                if (event.getY()-previosPositionY>0){
-                    for (int i=0; i<group.getChildren().size(); i++){
-                        if (group.getChildren().get(i).getClass().equals(Circle.class)){
-                            if (((Circle) group.getChildren().get(i)).getCenterY()>previosPositionY){
-                                redrawVoronoy(
-                                        (Circle) group.getChildren().get(i),
-                                        ((Circle) group.getChildren().get(i)).getCenterX()+xPadding,
-                                        ((Circle) group.getChildren().get(i)).getCenterY()+yPadding,
-                                        group
-                                );
-                            }
-                        }
-                    }
-                }
-                //DOWN
-                if (event.getY()-previosPositionY<0){
-                    for (int i=0; i<group.getChildren().size(); i++){
-                        if (group.getChildren().get(i).getClass().equals(Circle.class)){
-                            if (((Circle) group.getChildren().get(i)).getCenterY()<previosPositionY){
-                                redrawVoronoy(
-                                        (Circle) group.getChildren().get(i),
-                                        ((Circle) group.getChildren().get(i)).getCenterX()+xPadding,
-                                        ((Circle) group.getChildren().get(i)).getCenterY()+yPadding,
-                                        group
-                                );
-                            }
-                        }
-                    }
-                }
-
-                redrawVoronoy(circle, event.getX(), event.getY(), group);
-            });
-            if ((boolean)coordinate.getMetric("stopPolymorph")){
-                circle.setFill(Color.PINK);
-            }
-
-            group.getChildren().add(circle);
-        }
-
-        for (dataPrepare.data.voronoi.Polygon cell : voronoi.getPolygons()){
-            for (int i=0; i<=cell.getPoints().size(); i++){
-                Coordinate start = cell.getPoints().get(i%cell.getPoints().size());
-                Coordinate end = cell.getPoints().get((i+1)%cell.getPoints().size());
-                Line line = new Line(start.getX(), start.getY(), end.getX(), end.getY());
-                line.setStrokeWidth(2);
-                line.setOpacity(0.5);
-                if (cell.getHost().getMetrics().get("deep")!=null){
-                    //line.setStrokeWidth((int)cell.getHost().getMetrics().get("convex"));
-                    switch (((int)cell.getHost().getMetrics().get("deep"))){
-                        case 0:{
-                            line.setStroke(Color.GREEN);
-                            break;
-                        }
-                        case 1:{
-                            line.setStroke(Color.BLUE);
-                            break;
-                        }
-                        case 2:{
-                            line.setStroke(Color.YELLOW);
-                            break;
-                        }
-                        case 3:{
-                            line.setStroke(Color.RED);
-                            break;
-                        }
-                        case 4:{
-                            line.setStroke(Color.PINK);
-                            break;
-                        }
-                    }
-                }
-                group.getChildren().add(line);
-            }
-        }
-        return group;
-    }
-
-    private void redrawVoronoy(Circle circle, double newPositionX, double newPositionY, Group group){
-        Line line;
-        for (int i=0; i<group.getChildren().size(); i++){
-            if (group.getChildren().get(i).getClass().equals(Line.class)){
-                line=(Line) group.getChildren().get(i);
-                if (line.getStartX()==circle.getCenterX() && line.getStartY()==circle.getCenterY()){
-                    line.setStartX(newPositionX);
-                    line.setStartY(newPositionY);
-                }
-                if (line.getEndX()==circle.getCenterX() && line.getEndY()==circle.getCenterY()){
-                    line.setEndX(newPositionX);
-                    line.setEndY(newPositionY);
-                }
-            }
-        }
-        circle.setCenterX(newPositionX);
-        circle.setCenterY(newPositionY);
-    }
-
-    private void getTime(){
-        ZonedDateTime zdt = ZonedDateTime.now();
-        java.util.Date date = java.util.Date.from( zdt.toInstant() );
-        System.out.println(date);
-    }
 }

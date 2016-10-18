@@ -11,6 +11,8 @@ import dataPrepare.data.graph.Graph;
 import dataPrepare.data.triangulation.TriangleDotsImpl;
 import dataPrepare.data.triangulation.TriangleVoronoiImpl;
 import dataPrepare.data.graph.Host;
+import dataPrepare.draw.SaveVoronoi;
+import dataPrepare.methods.AddExternalPoints;
 import dataPrepare.methods.ConvexHull;
 import dataPrepare.methods.Triangulate;
 
@@ -271,100 +273,72 @@ public class Voronoi {
 
 
 
+        new AddExternalPoints().add(this);
+        List<Coordinate> ring = getConvegHullOfVoronoi(polygons);
+        new AddExternalPoints().add(ring, this);
 
         for (Coordinate coordinate : dots){
             coordinate.addMetric("stopPolymorph", false);
+            coordinate.addMetric("BLUE", false);
         }
-
-
         for (Coordinate coordinate : dots){
             coordinate.addMetric("fixed", false);
         }
-        List<Coordinate> ring = getConvegHullOfVoronoi(polygons);
-        for (Coordinate coordinate : ring){
-            coordinate.addMetric("fixed", true);
-        }
-        //new TestD3().force_INPUT(this);
-        new TestD3().force_OUTPUT(this, TestD3.exp2JSON());
+
+
+        new TestD3().force_OUTPUT(this, TestD3.get2OUTPUT());
+//        List<Coordinate> ringCoords = getConvegHullOfVoronoi(polygons);
+//        for (Coordinate coordinate : ringCoords){
+//            coordinate.addMetric("stopPolymorph", true);
+//        }
+//        new TestD3().force_INPUT(this);
+
+        TestPolymorph.checkOnPlanar(this);
+        SaveVoronoi.getInstance().saveStatement(polygons);
+
         List<Polygon> polygonsDeepOne = new LinkedList<>();
+        for (Polygon polygon : polygons){
+            if ((int)polygon.getHost().getMetrics().get("deep")==0){
+                polygonsDeepOne.add(polygon);
+            }
+        }
+        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+
+
+        polygonsDeepOne = new LinkedList<>();
         for (Polygon polygon : polygons){
             if ((int)polygon.getHost().getMetrics().get("deep")==1){
                 polygonsDeepOne.add(polygon);
             }
         }
         new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+
+//        polygonsDeepOne = new LinkedList<>();
+//        for (Polygon polygon : polygons){
+//            if ((int)polygon.getHost().getMetrics().get("deep")==2){
+//                polygonsDeepOne.add(polygon);
+//            }
+//        }
+//        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
         new TestD3().force_INPUT(this);
 
-        //TODO
-//        calcDeep();
-//        int deep = getDeepOfVoronoi();
-//        while (deep>=0){
-//            List<Polygon> polygons = new LinkedList<>();
-//            for (Polygon polygon : this.polygons){
-//                if (((int)polygon.getHost().getMetrics().get("deep"))==deep){
-//                    polygons.add(polygon);
-//                }
+//        polygonsDeepOne = new LinkedList<>();
+//        for (Polygon polygon : polygons){
+//            if ((int)polygon.getHost().getMetrics().get("deep")==1){
+//                polygonsDeepOne.add(polygon);
 //            }
-//            boolean flag = false;
-//            List<Coordinate> dots = new LinkedList<>();
-//            for (Polygon polygon : polygons){
-//                for (Coordinate coordinate : polygon.getPoints()){
-//                    if (!dots.contains(coordinate)){
-//                        dots.add(coordinate);
-//                    }
-//                }
-//            }
-//            while (!flag){
-//                for (Coordinate coordinate : dots){
-//                    coordinate.addMetric("stop", false);
-//                }
-//                for (Polygon polygon : polygons){
-//                    int freeDots = 0;
-//                    for (Coordinate coordinate : polygon.getPoints()){
-//                        boolean stop = (boolean) coordinate.getMetric("stop");
-//                        if (!stop){
-//                            freeDots++;
-//                        }
-//                    }
-//                    if (freeDots==0){
-//                        break;
-//                    }
-//                    if (freeDots!=0 && polygon==polygons.get(polygons.size()-1)){
-//                        System.out.println("OK");
-//                        flag = true;
-//                        break;
-//                    }
-//                    if (freeDots!=0){
-//                        for (Coordinate coordinate : polygon.getPoints()){
-//                            coordinate.addMetric("stop", true);
-//                        }
-//                    }
-//                }
-//                //TODO
-//                //нужно заменить рандом на че то умное
-//                Collections.shuffle(polygons);
-//            }
-//            for (Coordinate coordinate : dots){
-//                coordinate.addMetric("stop", true);
-//            }
-//
-//            if (deep>=getDeepOfVoronoi()-1){
-//
-//                List<Polygon> polygonListSortedByOrder = new LinkedList<>();
-//                for (Polygon polygon : polygons){
-//                    polygonListSortedByOrder.add(polygon);
-//                }
-//                polygonListSortedByOrder.sort((o1, o2) -> {
-//                    if ((float)o1.getHost().getMetrics().get("order")<(float)o2.getHost().getMetrics().get("order")){
-//                        return -1;
-//                    }else {
-//                        return 1;
-//                    }
-//                });
-//                new TestPolymorph().polymorph(polygonListSortedByOrder, this);
-//            }
-//            deep--;
 //        }
+//        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+//
+//        polygonsDeepOne = new LinkedList<>();
+//        for (Polygon polygon : polygons){
+//            if ((int)polygon.getHost().getMetrics().get("deep")==2){
+//                polygonsDeepOne.add(polygon);
+//            }
+//        }
+//        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+
+        SaveVoronoi.getInstance().saveStatement(polygons);
     }
 
     private void calcDeep(){
@@ -411,17 +385,38 @@ public class Voronoi {
     public List<Separator> getSeparators(){
         return this.separators;
     }
+//    public Graph voronoiLikeAGraph(Voronoi voronoi){
+//        Graph graph = new Graph();
+//
+//        Set<Coordinate> coordinateSet = new HashSet<>();
+//        for (Polygon polygon : voronoi.getPolygons()){
+//            for (Coordinate coordinate : polygon.getPoints()){
+//                coordinateSet.add(coordinate);
+//            }
+//        }
+//
+//        for (Coordinate coordinate : coordinateSet){
+//            graph.setHost(new Host(1, coordinate));
+//        }
+//
+//        for (Polygon polygon : voronoi.getPolygons()){
+//            for (int i=0; i<polygon.getPoints().size(); i++){
+//                Host from = getHostFromCoordinates(graph, polygon.getPoints().get(i%polygon.getPoints().size()));
+//                Host to = getHostFromCoordinates(graph, polygon.getPoints().get((i+1)%polygon.getPoints().size()));
+//                if (!(graph.getRelations().get(from).contains(to) || graph.getRelations(to).contains(from))){
+//                    graph.setRelation(from, to);
+//                }
+//
+//            }
+//        }
+//        return graph;
+//    }
+
     public Graph voronoiLikeAGraph(Voronoi voronoi){
         Graph graph = new Graph();
 
-        Set<Coordinate> coordinateSet = new HashSet<>();
-        for (Polygon polygon : voronoi.getPolygons()){
-            for (Coordinate coordinate : polygon.getPoints()){
-                coordinateSet.add(coordinate);
-            }
-        }
 
-        for (Coordinate coordinate : coordinateSet){
+        for (Coordinate coordinate : dots){
             graph.setHost(new Host(1, coordinate));
         }
 
@@ -437,7 +432,6 @@ public class Voronoi {
         }
         return graph;
     }
-
 
     public Graph voronoiLikeAGraph(List<Polygon> polygons){
         Graph graph = new Graph();
