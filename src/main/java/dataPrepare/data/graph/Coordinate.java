@@ -20,6 +20,7 @@ public class Coordinate{
         this.x = coordinate.getX();
         this.y = coordinate.getY();
         metric = new HashMap<>();
+        metric.put("YELLOW", false);
     }
 
     public void addMetric(String name, Object object){

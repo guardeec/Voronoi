@@ -5,7 +5,12 @@ import dataPrepare.data.graph.Coordinate;
 /**
  * Created by guardeec on 17.10.16.
  */
-public class DistanceFromDotToLine {
+public class DistanceFromDot {
+
+    public static float distanceBetweenCoordinates(Coordinate coordinate1, Coordinate coordinate2){
+        return (float) Math.sqrt( Math.pow(coordinate1.getX()-coordinate2.getX(), 2) + Math.pow(coordinate1.getY()-coordinate2.getY(), 2));
+    }
+
     //Compute the dot product AB . AC
     private static double DotProduct(double[] pointA, double[] pointB, double[] pointC)
     {

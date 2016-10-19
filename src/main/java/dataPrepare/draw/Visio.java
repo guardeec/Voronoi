@@ -212,63 +212,63 @@ public class Visio extends Application {
         switch (i){
             case 7:{return "1";}
             case 39:{return "1";}
-            case 9:{return "1";}
+            case 10:{return "1";}
 
             case 43:{return "2";}
             case 5:{return "2";}
-            case 10:{return "2";}
+            case 9:{return "2";}
 
             case 1:{return "3";}
             case 36:{return "3";}
-            case 28:{return "3";}
+            case 8:{return "3";}
 
             case 2:{return "4";}
             case 38:{return "4";}
-            case 25:{return "4";}
+            case 11:{return "4";}
 
             case 18:{return "5";}
             case 23:{return "5";}
-            case 27:{return "5";}
+            case 33:{return "5";}
 
             case 22:{return "6";}
             case 3:{return "6";}
-            case 29:{return "6";}
+            case 34:{return "6";}
 
             case 40:{return "7";}
             case 21:{return "7";}
-            case 26:{return "7";}
+            case 30:{return "7";}
 
             case 6:{return "8";}
             case 4:{return "8";}
-            case 24:{return "8";}
+            case 31:{return "8";}
 
             case 41:{return "9";}
             case 17:{return "9";}
-            case 20:{return "9";}
+            case 32:{return "9";}
 
             case 16:{return "10";}
             case 19:{return "10";}
 
             case 14:{return "11";}
-            case 32:{return "11";}
+            case 20:{return "11";}
 
             case 15:{return "12";}
-            case 31:{return "12";}
+            case 24:{return "12";}
 
             case 12:{return "13";}
-            case 30:{return "13";}
+            case 26:{return "13";}
 
             case 13:{return "14";}
-            case 34:{return "14";}
+            case 29:{return "14";}
 
             case 0:{return "15";}
-            case 33:{return "15";}
+            case 27:{return "15";}
 
             case 42:{return "16";}
-            case 11:{return "16";}
+            case 25:{return "16";}
 
             case 37:{return "17";}
-            case 8:{return "17";}
+            case 28:{return "17";}
 
             case 35:{return "18";}
         }
@@ -318,7 +318,9 @@ public class Visio extends Application {
                 polygon.setOpacity(1);
             }
             polygon.setOnMouseClicked(event -> {
-                System.out.println(cell.getHost().getMetrics().get("order"));
+                System.out.println("order: "+cell.getHost().getMetrics().get("order"));
+                System.out.println("id     "+cell.getHost().getMetrics().get("id"));
+                System.out.println();
             });
 
 

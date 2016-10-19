@@ -14,6 +14,7 @@ import dataPrepare.data.graph.Host;
 import dataPrepare.draw.SaveVoronoi;
 import dataPrepare.methods.AddExternalPoints;
 import dataPrepare.methods.ConvexHull;
+import dataPrepare.methods.Iterations;
 import dataPrepare.methods.Triangulate;
 
 import java.util.*;
@@ -313,14 +314,17 @@ public class Voronoi {
         }
         new TestPolymorph().polymorph(polygonsDeepOne, this, null);
 
-//        polygonsDeepOne = new LinkedList<>();
-//        for (Polygon polygon : polygons){
-//            if ((int)polygon.getHost().getMetrics().get("deep")==2){
-//                polygonsDeepOne.add(polygon);
-//            }
-//        }
-//        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-        new TestD3().force_INPUT(this);
+        polygonsDeepOne = new LinkedList<>();
+        for (Polygon polygon : polygons){
+            if ((int)polygon.getHost().getMetrics().get("deep")==2){
+                polygonsDeepOne.add(polygon);
+            }
+        }
+        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+
+
+        System.out.println("ITERS: "+ Iterations.getInstance().getIter());
+        System.out.println(new TestD3().force_INPUT(this, graph));
 
 //        polygonsDeepOne = new LinkedList<>();
 //        for (Polygon polygon : polygons){
@@ -338,7 +342,7 @@ public class Voronoi {
 //        }
 //        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
 
-        SaveVoronoi.getInstance().saveStatement(polygons);
+       // SaveVoronoi.getInstance().saveStatement(polygons);
     }
 
     private void calcDeep(){

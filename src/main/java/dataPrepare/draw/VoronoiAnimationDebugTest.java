@@ -84,6 +84,17 @@ public class VoronoiAnimationDebugTest extends Application {
                     circle1.setFill(Color.BLUE);
                     group.getChildren().add(circle1);
                 }
+                if (polygon.getPoints().get(i).getMetric("YELLOW")!=null){
+                    if ((boolean)polygon.getPoints().get(i).getMetric("YELLOW")){
+                        Circle circle1 = new Circle();
+                        circle1.setCenterX(polygon.getPoints().get(i).getX());
+                        circle1.setCenterY(polygon.getPoints().get(i).getY());
+                        circle1.setRadius(12);
+                        circle1.setFill(Color.YELLOW);
+                        group.getChildren().add(circle1);
+                    }
+                }
+
                 group.getChildren().add(circle);
             }
         }

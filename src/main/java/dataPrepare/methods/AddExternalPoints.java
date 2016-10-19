@@ -3,17 +3,82 @@ package dataPrepare.methods;
 import com.google.common.collect.Lists;
 import dataPrepare.data.TestPolymorph;
 import dataPrepare.data.graph.Coordinate;
+import dataPrepare.data.graph.Host;
 import dataPrepare.data.voronoi.Polygon;
 import dataPrepare.data.voronoi.Voronoi;
+import dataPrepare.draw.SaveVoronoi;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by guardeec on 11.10.16.
  */
 public class AddExternalPoints {
+
+    public void addeXternalPointsForPlanarityWithPadding(Voronoi voronoi){
+        while (!TestPolymorph.checkOnPlanar(voronoi)){
+            Map<Coordinate, List<Host>> map = new HashMap<>();
+            List<List<Host>> edges = voronoi.voronoiLikeAGraph(voronoi).getEdges();
+            for (Coordinate coordinate : voronoi.getDots()){
+                if ((boolean)coordinate.getMetric("stopPolymorph")){
+                    for (List<Host> edge : edges){
+                        if (
+                            //ребро не содержит анализируемой точки
+                                !(edge.get(0).getCoordinate()==coordinate || edge.get(1).getCoordinate()==coordinate)
+                                        &&
+                                        //ребро может двигаться
+                                        (
+                                                //т.е. точка 1 не содержит ни синию ни красную точку
+                                                (!(boolean)edge.get(0).getCoordinate().getMetric("BLUE") && !(boolean)edge.get(0).getCoordinate().getMetric("stopPolymorph"))
+                                                        ||
+                                                        //либо точка 2 не содержит ни синиюю ни красную точку
+                                                        (!(boolean)edge.get(1).getCoordinate().getMetric("BLUE") && !(boolean)edge.get(1).getCoordinate().getMetric("stopPolymorph"))
+                                        )
+                                ){
+                            float paddingDistance = DistanceFromDot.LineToPointDistance2D(
+                                    edge.get(0).getCoordinate(),
+                                    edge.get(1).getCoordinate(),
+                                    coordinate
+                            );
+                            if (paddingDistance<10){
+                                map.put(coordinate, edge);
+                            }
+                        }
+                    }
+                }
+            }
+            for (Coordinate C : map.keySet()){
+
+
+                Coordinate A = map.get(C).get(0).getCoordinate();
+                Coordinate B = map.get(C).get(1).getCoordinate();
+
+
+                Coordinate coordinate = new Coordinate(
+                        (A.getX()+B.getX())/2,
+                        (A.getY()+B.getY())/2
+                );
+                coordinate.addMetric("BLUE", false);
+                coordinate.addMetric("stopPolymorph", true);
+
+                voronoi.getDots().add(coordinate);
+                for (Polygon polygonToSeparate : voronoi.getPolygons()){
+                    for (int i=0; i<polygonToSeparate.getPoints().size(); i++){
+                        if (polygonToSeparate.getPoints().get(i)==A && polygonToSeparate.getPoints().get((i+1)%polygonToSeparate.getPoints().size())==B){
+                            polygonToSeparate.getPoints().add(i+1, coordinate);
+                        }else {
+                            if (polygonToSeparate.getPoints().get(i)==B && polygonToSeparate.getPoints().get((i+1)%polygonToSeparate.getPoints().size())==A){
+                                polygonToSeparate.getPoints().add(i+1, coordinate);
+                            }
+                        }
+                    }
+                }
+
+                SaveVoronoi.getInstance().saveStatement(voronoi.getPolygons());
+                break;
+            }
+        }
+    }
 
     public void addOnePointPerEdge(Polygon polygon, Voronoi voronoi){
         Coordinate startPoint = null;
@@ -135,27 +200,6 @@ public class AddExternalPoints {
 
                 voronoi.getDots().add(coordinate);
                 newDots.add(coordinate);
-//                for (Polygon polygonOfVoronoi : voronoi.getPolygons()){
-//                    if (polygonOfVoronoi.getPoints().contains(edge.coordinate1)&&polygonOfVoronoi.getPoints().contains(edge.getCoordinate2())){
-//                        int index1 = polygonOfVoronoi.getPoints().indexOf(edge.coordinate1);
-//                        int index2 = polygonOfVoronoi.getPoints().indexOf(edge.coordinate2);
-//                        int numberOfPolygonDots = polygon.getPoints().size();
-//                        System.out.println(index1+" "+index2);
-//                        polygonOfVoronoi.getPoints().add((index2+numberOfPolygonDots-i-1)%polygonOfVoronoi.getPoints().size(), coordinate);
-//                    }
-//                    for (int q=0; q<polygonOfVoronoi.getPoints().size(); q++){
-//                        System.out.println(polygon.getPoints().size());
-//                        if (polygonOfVoronoi.getPoints().get(q)==edge.coordinate1 && polygonOfVoronoi.getPoints().get((q+1+i)%polygonOfVoronoi.getPoints().size())==edge.coordinate2){
-//                            polygonOfVoronoi.getPoints().add((q+i+1)%polygonOfVoronoi.getPoints().size(), coordinate);
-//                            break;
-//                        }else {
-//                            if (polygonOfVoronoi.getPoints().get(q)==edge.coordinate2 && polygonOfVoronoi.getPoints().get((q+1+i)%polygonOfVoronoi.getPoints().size())==edge.coordinate1){
-//                                polygonOfVoronoi.getPoints().add((q+i+1)%polygonOfVoronoi.getPoints().size(), coordinate);
-//                                break;
-//                            }
-//                        }
-//                    }
-                //}
             }
             for (Polygon polygonOfVoronoi : voronoi.getPolygons()){
                 if (polygonOfVoronoi.getPoints().contains(edge.coordinate1)&&polygonOfVoronoi.getPoints().contains(edge.getCoordinate2())){

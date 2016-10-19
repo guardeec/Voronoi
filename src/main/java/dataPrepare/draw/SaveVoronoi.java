@@ -21,8 +21,10 @@ public class SaveVoronoi {
 
     PrintWriter out;
     String previosStatement = "";
+    String fileName = "";
 
     public void startSaving(String fileName){
+        this.fileName = fileName;
         try {
             FileWriter fw = new FileWriter(fileName, true);
             BufferedWriter bw = new BufferedWriter(fw);
@@ -40,6 +42,8 @@ public class SaveVoronoi {
             out.print(statement+"\n");
             previosStatement=statement;
         }
+        endSaving();
+        startSaving(fileName);
     }
     public void endSaving(){
        // out.print("[]]");
