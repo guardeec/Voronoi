@@ -6,6 +6,7 @@ import dataPrepare.data.triangulation.Triangle;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /*
@@ -16,13 +17,29 @@ import java.util.List;
      */
 public class Triangulate {
 
-
+    private static boolean checkOnUnic(Graph graph){
+        List<Integer> x = new LinkedList<>();
+        List<Integer> y = new LinkedList<>();
+        for (Host host : graph.getHosts()){
+            if (x.contains((int)host.getCoordinate().getX())){
+                host.getCoordinate().setX(host.getCoordinate().getX()+1);
+                return false;
+            }
+            if (y.contains((int)host.getCoordinate().getY())){
+                host.getCoordinate().setY(host.getCoordinate().getY()+1);
+                return false;
+            }
+            x.add((int) host.getCoordinate().getX());
+            y.add((int) host.getCoordinate().getX());
+        }
+        return true;
+    }
 
     /*
     генерация входного файла
      */
     private static String setInput(Graph graph){
-        System.out.println(graph.getHosts().size());
+
 
         /*
         входной файл состоит их пяти кортежей

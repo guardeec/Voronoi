@@ -6,7 +6,6 @@ import dataPrepare.data.graph.Coordinate;
 import dataPrepare.data.graph.Host;
 import dataPrepare.data.voronoi.Polygon;
 import dataPrepare.data.voronoi.Voronoi;
-import dataPrepare.draw.SaveVoronoi;
 
 import java.util.*;
 
@@ -40,13 +39,18 @@ public class AddExternalPoints {
                                     edge.get(1).getCoordinate(),
                                     coordinate
                             );
-                            if (paddingDistance<10){
+                            if (paddingDistance<=10){
                                 map.put(coordinate, edge);
                             }
                         }
                     }
                 }
             }
+
+            if (map.keySet().size()==0){
+                break;
+            }
+
             for (Coordinate C : map.keySet()){
 
 
@@ -54,12 +58,29 @@ public class AddExternalPoints {
                 Coordinate B = map.get(C).get(1).getCoordinate();
 
 
-                Coordinate coordinate = new Coordinate(
+//
+
+                Coordinate coordinate = null;
+
+                try {
+                    coordinate = CircleLine.getLineCircleIntersection(A, B, C, 20)[0];
+                }catch (ArrayIndexOutOfBoundsException ex){
+                    coordinate = new Coordinate(
                         (A.getX()+B.getX())/2,
                         (A.getY()+B.getY())/2
-                );
+                    );
+                }
+//                if (coordinate==null){
+//                    coordinate = new Coordinate(
+//                        (A.getX()+B.getX())/2,
+//                        (A.getY()+B.getY())/2
+//                    );
+//                }
+
+
                 coordinate.addMetric("BLUE", false);
                 coordinate.addMetric("stopPolymorph", true);
+                coordinate.addMetric("c", 0);
 
                 voronoi.getDots().add(coordinate);
                 for (Polygon polygonToSeparate : voronoi.getPolygons()){
@@ -73,8 +94,6 @@ public class AddExternalPoints {
                         }
                     }
                 }
-
-                SaveVoronoi.getInstance().saveStatement(voronoi.getPolygons());
                 break;
             }
         }
@@ -136,8 +155,25 @@ public class AddExternalPoints {
                 }
             }
         }
+    }
 
+    public static void brokeEdgeTest(Voronoi voronoi, Coordinate first, Coordinate second){
+        Coordinate coordinate = new Coordinate((first.getX()+second.getX())/2,(first.getY()+second.getY())/2);
+        coordinate.addMetric("stopPolymorph", false);
+        coordinate.addMetric("BLUE", false);
+        voronoi.getDots().add(coordinate);
+        for (Polygon polygonToSeparate : voronoi.getPolygons()){
+            for (int i=0; i<polygonToSeparate.getPoints().size(); i++){
+                if (polygonToSeparate.getPoints().get(i)==first && polygonToSeparate.getPoints().get((i+1)%polygonToSeparate.getPoints().size())==second){
+                    polygonToSeparate.getPoints().add(i+1, coordinate);
+                }else {
+                    if (polygonToSeparate.getPoints().get(i)==second && polygonToSeparate.getPoints().get((i+1)%polygonToSeparate.getPoints().size())==first){
+                        polygonToSeparate.getPoints().add(i+1, coordinate);
+                    }
+                }
 
+            }
+        }
     }
 
     public void addPointsWhilePolymorph(Polygon polygon, Voronoi voronoi, float padding){

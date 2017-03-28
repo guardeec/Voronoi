@@ -1,20 +1,14 @@
 package dataPrepare.data.voronoi;
 
-import com.google.gson.Gson;
-import dataPrepare.Test2;
-import dataPrepare.data.Dejkstra;
-import dataPrepare.data.Test;
-import dataPrepare.data.TestD3;
-import dataPrepare.data.TestPolymorph;
+import dataPrepare.methods.Dejkstra;
+import dataPrepare.data.d3.RunD3;
 import dataPrepare.data.graph.Coordinate;
 import dataPrepare.data.graph.Graph;
 import dataPrepare.data.triangulation.TriangleDotsImpl;
 import dataPrepare.data.triangulation.TriangleVoronoiImpl;
 import dataPrepare.data.graph.Host;
-import dataPrepare.draw.SaveVoronoi;
 import dataPrepare.methods.AddExternalPoints;
 import dataPrepare.methods.ConvexHull;
-import dataPrepare.methods.Iterations;
 import dataPrepare.methods.Triangulate;
 
 import java.util.*;
@@ -25,18 +19,30 @@ import java.util.*;
 public class Voronoi {
 
     private List<Polygon> polygons;
-    private List<Separator> separators;
+    private List<Attractor> attractors;
     private List<Coordinate> dots;
     private Graph graph;
 
     private float fx, fy;
 
 
+    private void saveConnections(){
+        for (Host host : graph.getHosts()){
+            List<Host> relations = new LinkedList<>();
+
+            for (Host relatedHost : graph.getRelations().get(host)){
+                relations.add(relatedHost);
+            }
+            host.addMetric("relations", relations);
+        }
+    }
+
     public Voronoi(Graph graph, float frameSizeX, float frameSizeY, Polygon incapsulation){
         this.graph = graph;
         this.polygons = new LinkedList<>();
         this.dots = new LinkedList<>();
-        this.separators = new LinkedList<>();
+        this.attractors = new LinkedList<>();
+
 
         graph = ConvexHull.make(graph);
 
@@ -192,10 +198,10 @@ public class Voronoi {
 
     private List<Host> addBox(Graph graph, float frameSizeX, float frameSizeY){
         List<Host> convexHullHosts = ConvexHull.get(graph);
-        Host LUHOST = new Host(1, new Coordinate(0,frameSizeY));
-        Host LDHOST = new Host(1, new Coordinate(0,0));
-        Host RUHOST = new Host(1, new Coordinate(frameSizeX,frameSizeY));
-        Host RDHOST = new Host(1, new Coordinate(frameSizeX,0));
+        Host LUHOST = new Host(1, new Coordinate(1,frameSizeY-1));
+        Host LDHOST = new Host(1, new Coordinate(1,1));
+        Host RUHOST = new Host(1, new Coordinate(frameSizeX-1,frameSizeY-1));
+        Host RDHOST = new Host(1, new Coordinate(frameSizeX-1,1));
         graph.setHost(LUHOST);
         graph.setHost(LDHOST);
         graph.setHost(RUHOST);
@@ -204,26 +210,26 @@ public class Voronoi {
         graph.setRelation(LDHOST,RDHOST);
         graph.setRelation(LUHOST,LDHOST);
         graph.setRelation(RUHOST,RDHOST);
-        for (Host host : convexHullHosts){
-            switch (getClosestDotOfConvexHullBox(host.getCoordinate(), frameSizeX, frameSizeY)){
-                case "LU" :{
-                    graph.setRelation(host,RDHOST);
-                    break;
-                }
-                case "LD" :{
-                    graph.setRelation(host,RUHOST);
-                    break;
-                }
-                case "RU" :{
-                    graph.setRelation(host,LDHOST);
-                    break;
-                }
-                case "RD" :{
-                    graph.setRelation(host,LUHOST);
-                    break;
-                }
-            }
-        }
+//        for (Host host : convexHullHosts){
+//            switch (getClosestDotOfConvexHullBox(host.getCoordinate(), frameSizeX, frameSizeY)){
+//                case "LU" :{
+//                    graph.setRelation(host,RDHOST);
+//                    break;
+//                }
+//                case "LD" :{
+//                    graph.setRelation(host,RUHOST);
+//                    break;
+//                }
+//                case "RU" :{
+//                    graph.setRelation(host,LDHOST);
+//                    break;
+//                }
+//                case "RD" :{
+//                    graph.setRelation(host,LUHOST);
+//                    break;
+//                }
+//            }
+//        }
 
         List<Host> boxHosts = new LinkedList<>();
         boxHosts.add(LUHOST);
@@ -237,7 +243,10 @@ public class Voronoi {
         this.graph = graph;
         this.polygons = new LinkedList<>();
         this.dots = new LinkedList<>();
-        this.separators = new LinkedList<>();
+        this.attractors = new LinkedList<>();
+
+        saveConnections();
+
         //opt
         fx = frameSizeX;
         fy = frameSizeY;
@@ -266,17 +275,24 @@ public class Voronoi {
             );
         }
 
+        for (TriangleVoronoiImpl triangle : triangles){
+            graph.getRelations().get(triangle.getFirstHost()).add(triangle.getSecondHost());
+            graph.getRelations().get(triangle.getSecondHost()).add(triangle.getThirdHost());
+            graph.getRelations().get(triangle.getThirdHost()).add(triangle.getFirstHost());
+        }
+
         makeField(triangles, graph, this);
         for (Host host : boxHosts){
             graph.removeHost(host);
         }
-
+        makeSeparators();
 
 
 
         new AddExternalPoints().add(this);
         List<Coordinate> ring = getConvegHullOfVoronoi(polygons);
         new AddExternalPoints().add(ring, this);
+        ring = getConvegHullOfVoronoi(polygons);
 
         for (Coordinate coordinate : dots){
             coordinate.addMetric("stopPolymorph", false);
@@ -286,46 +302,44 @@ public class Voronoi {
             coordinate.addMetric("fixed", false);
         }
 
+        List<Coordinate> notRing = new LinkedList<>();
+        for (Coordinate coordinate : dots){
+            if (!ring.contains(coordinate)){
+                notRing.add(coordinate);
+            }
+        }
+        RunD3.makeSymmetric(this, notRing, dots.size()*-10, 1);
+        //RunD3.normolize(this, frameSizeX, frameSizeY);
+        RunD3.makeSymmetric(this, ring, -1, 1);
+        //RunD3.normolize(this, frameSizeX, frameSizeY);
 
-        new TestD3().force_OUTPUT(this, TestD3.get2OUTPUT());
-//        List<Coordinate> ringCoords = getConvegHullOfVoronoi(polygons);
-//        for (Coordinate coordinate : ringCoords){
+
+
+
+//        new TestD3().force_OUTPUT(this, TestD3.get2OUTPUT());
+//        ring = getConvegHullOfVoronoi(polygons);
+//        for (Coordinate coordinate : ring){
 //            coordinate.addMetric("stopPolymorph", true);
 //        }
-//        new TestD3().force_INPUT(this);
+//        SaveVoronoi.getInstance().saveStatement(polygons);
+//        System.out.println(new TestD3().force_INPUT(this, graph));
 
-        TestPolymorph.checkOnPlanar(this);
-        SaveVoronoi.getInstance().saveStatement(polygons);
-
-        List<Polygon> polygonsDeepOne = new LinkedList<>();
-        for (Polygon polygon : polygons){
-            if ((int)polygon.getHost().getMetrics().get("deep")==0){
-                polygonsDeepOne.add(polygon);
-            }
-        }
-        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-
-
-        polygonsDeepOne = new LinkedList<>();
-        for (Polygon polygon : polygons){
-            if ((int)polygon.getHost().getMetrics().get("deep")==1){
-                polygonsDeepOne.add(polygon);
-            }
-        }
-        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-
-        polygonsDeepOne = new LinkedList<>();
-        for (Polygon polygon : polygons){
-            if ((int)polygon.getHost().getMetrics().get("deep")==2){
-                polygonsDeepOne.add(polygon);
-            }
-        }
-        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-
-
-        System.out.println("ITERS: "+ Iterations.getInstance().getIter());
-        System.out.println(new TestD3().force_INPUT(this, graph));
-
+//        for (Polygon polygon : polygons){
+//            System.out.println(polygon.getArea());
+//        }
+//
+//        TestPolymorph.checkOnPlanar(this);
+//        SaveVoronoi.getInstance().saveStatement(polygons);
+//
+//        List<Polygon> polygonsDeepOne = new LinkedList<>();
+//        for (Polygon polygon : polygons){
+//            if ((int)polygon.getHost().getMetrics().get("deep")==0){
+//                polygonsDeepOne.add(polygon);
+//            }
+//        }
+//        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
+//
+//
 //        polygonsDeepOne = new LinkedList<>();
 //        for (Polygon polygon : polygons){
 //            if ((int)polygon.getHost().getMetrics().get("deep")==1){
@@ -333,7 +347,7 @@ public class Voronoi {
 //            }
 //        }
 //        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-//
+
 //        polygonsDeepOne = new LinkedList<>();
 //        for (Polygon polygon : polygons){
 //            if ((int)polygon.getHost().getMetrics().get("deep")==2){
@@ -341,9 +355,41 @@ public class Voronoi {
 //            }
 //        }
 //        new TestPolymorph().polymorph(polygonsDeepOne, this, null);
-
-       // SaveVoronoi.getInstance().saveStatement(polygons);
     }
+
+    public void makeSeparators(){
+        for (Polygon from : polygons){
+            List connected = (List) from.getHost().getMetrics().get("relations");
+            for (Polygon to : polygons){
+
+                if (from!=to && connected.contains(to.getHost())){
+                    List<Coordinate> samePoints = new LinkedList<>();
+                    for (Coordinate coordinate : from.getPoints()){
+                        if (to.getPoints().contains(coordinate)){
+                            samePoints.add(coordinate);
+                        }
+                    }
+                    for (int i=1; i<samePoints.size(); i++){
+                        attractors.add(new Attractor(samePoints.get(i-1), samePoints.get(i)));
+                    }
+                }
+            }
+        }
+    }
+    private Polygon findPolygonWithEdge(Coordinate A, Coordinate B){
+        for (Polygon polygon : polygons){
+            for (int i=-0; i<polygon.getPoints().size(); i++){
+                Coordinate first = polygon.getPoints().get(i);
+                Coordinate second = polygon.getPoints().get((i+1)%polygon.getPoints().size());
+                if ((first==A || second==A) && (first==B || second==B)){
+                    return polygon;
+                }
+            }
+        }
+        return null;
+    }
+
+
 
     private void calcDeep(){
         int counter = 0;
@@ -386,8 +432,8 @@ public class Voronoi {
     public List<Coordinate> getDots(){
         return this.dots;
     }
-    public List<Separator> getSeparators(){
-        return this.separators;
+    public List<Attractor> getAttractors(){
+        return this.attractors;
     }
 //    public Graph voronoiLikeAGraph(Voronoi voronoi){
 //        Graph graph = new Graph();
@@ -436,6 +482,8 @@ public class Voronoi {
         }
         return graph;
     }
+
+
 
     public Graph voronoiLikeAGraph(List<Polygon> polygons){
         Graph graph = new Graph();

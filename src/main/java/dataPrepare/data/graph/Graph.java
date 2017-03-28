@@ -11,6 +11,18 @@ public class Graph {
     private List<Host> nodes;
     private Map<Host, List<Host>> links;
 
+    public Graph copy(){
+        Graph copy = new Graph();
+        for (Host host : this.nodes){
+            copy.setHost(host);
+        }
+        for (Host host : this.nodes){
+            for (Host rel : this.links.get(host)){
+                copy.setRelation(host, rel);
+            }
+        }
+        return copy;
+    }
 
     public Graph() {
         this.nodes = new LinkedList<>();

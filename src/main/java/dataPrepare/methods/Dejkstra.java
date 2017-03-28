@@ -1,4 +1,4 @@
-package dataPrepare.data;
+package dataPrepare.methods;
 
 import dataPrepare.data.graph.Coordinate;
 

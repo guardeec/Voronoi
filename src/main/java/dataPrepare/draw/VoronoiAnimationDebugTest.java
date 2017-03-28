@@ -3,6 +3,9 @@ package dataPrepare.draw;/**
  */
 
 import com.google.gson.Gson;
+import dataPrepare.data.debug.DebugVoronoiData;
+import dataPrepare.data.debug.Dot;
+import dataPrepare.data.debug.Edge;
 import dataPrepare.data.voronoi.Polygon;
 import dataPrepare.data.voronoi.Voronoi;
 import javafx.animation.AnimationTimer;
@@ -24,7 +27,7 @@ public class VoronoiAnimationDebugTest extends Application {
     int counter = 0;
     Group group;
     private long lastUpdate = 0 ;
-    private long tickTime = 502795720/300;
+    private long tickTime = 502795720/3000000;
     BufferedReader in;
     StringBuilder sb;
     Gson gson = new Gson();
@@ -39,7 +42,7 @@ public class VoronoiAnimationDebugTest extends Application {
         Scene scene = new Scene(group, 1000, 1000);
 
         sb = new StringBuilder();
-        File file = new File("test");
+        File file = new File("save");
         try {
             in = new BufferedReader(new FileReader( file.getAbsoluteFile()));
         } catch(IOException e) {
@@ -52,51 +55,41 @@ public class VoronoiAnimationDebugTest extends Application {
         primaryStage.show();
     }
 
-    public void draw(Group group, List<Polygon> polygons){
+    public void draw(Group group, DebugVoronoiData debugVoronoiData){
+        group.getChildren().clear();
         group.getChildren().removeAll(group.getChildren());
-        for (Polygon polygon : polygons){
-            for (int i=0; i<polygon.getPoints().size(); i++){
+
+
+        for (Edge edge : debugVoronoiData.getEdges()){
+
+            Dot from = edge.getFrom();
+            for (Dot to : edge.getTo()){
                 Line line = new Line(
-                        polygon.getPoints().get(i).getX(),
-                        polygon.getPoints().get(i).getY(),
-                        polygon.getPoints().get((i+1)%polygon.getPoints().size()).getX(),
-                        polygon.getPoints().get((i+1)%polygon.getPoints().size()).getY()
-                        );
+                        from.getX(),from.getY(),
+                        to.getX(), to.getY()
+                );
                 line.setStrokeWidth(2);
                 line.setStroke(Color.GRAY);
                 line.setOpacity(0.8f);
                 group.getChildren().add(line);
-
-                Circle circle = new Circle();
-                circle.setCenterX(polygon.getPoints().get(i).getX());
-                circle.setCenterY(polygon.getPoints().get(i).getY());
-                circle.setRadius(4);
-                if ((boolean)polygon.getPoints().get(i).getMetric("stopPolymorph")){
-                    circle.setFill(Color.RED);
-                }else {
-                    circle.setFill(Color.GRAY);
-                }
-                if ((boolean)polygon.getPoints().get(i).getMetric("BLUE")){
-                    Circle circle1 = new Circle();
-                    circle1.setCenterX(polygon.getPoints().get(i).getX());
-                    circle1.setCenterY(polygon.getPoints().get(i).getY());
-                    circle1.setRadius(8);
-                    circle1.setFill(Color.BLUE);
-                    group.getChildren().add(circle1);
-                }
-                if (polygon.getPoints().get(i).getMetric("YELLOW")!=null){
-                    if ((boolean)polygon.getPoints().get(i).getMetric("YELLOW")){
-                        Circle circle1 = new Circle();
-                        circle1.setCenterX(polygon.getPoints().get(i).getX());
-                        circle1.setCenterY(polygon.getPoints().get(i).getY());
-                        circle1.setRadius(12);
-                        circle1.setFill(Color.YELLOW);
-                        group.getChildren().add(circle1);
-                    }
-                }
-
-                group.getChildren().add(circle);
             }
+
+            if (from.getC()!=0){
+                Circle marker = new Circle(from.getX(),from.getY(), 20);
+                if (from.getC()==1){marker.setFill(Color.BLUE);}
+                if (from.getC()==2){marker.setFill(Color.GREEN);}
+                if (from.getC()==3){marker.setFill(Color.YELLOW);}
+                group.getChildren().add(marker);
+            }
+
+
+
+            Circle circle = new Circle(from.getX(),from.getY(), 3);
+            if (from.isBlocked()){circle.setFill(Color.RED);}else {circle.setFill(Color.BLUE);}
+            group.getChildren().add(circle);
+
+
+
         }
     }
 
@@ -120,14 +113,9 @@ public class VoronoiAnimationDebugTest extends Application {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            List list =gson.fromJson(s, List.class);
-            List<Polygon> polygonList = new LinkedList<>();
-           for (Object o : list){
-                String p = gson.toJson(o);
-                Polygon polygon = gson.fromJson(p, Polygon.class);
-                polygonList.add(polygon);
-            }
-            draw(group, polygonList);
+            DebugVoronoiData debugVoronoiData =gson.fromJson(s, DebugVoronoiData.class);
+
+            draw(group, debugVoronoiData);
             counter++;
         }
     }

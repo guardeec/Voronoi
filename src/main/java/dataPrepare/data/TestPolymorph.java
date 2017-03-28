@@ -1,15 +1,16 @@
 package dataPrepare.data;
 
+import dataPrepare.data.debug.SaveVoronoi;
 import dataPrepare.data.graph.Coordinate;
 import dataPrepare.data.graph.Host;
+import dataPrepare.data.polymorph.Chain;
 import dataPrepare.data.voronoi.Polygon;
 import dataPrepare.data.voronoi.Voronoi;
-import dataPrepare.draw.SaveVoronoi;
-import dataPrepare.methods.AddExternalPoints;
-import dataPrepare.methods.DistanceFromDot;
-import dataPrepare.methods.Iterations;
+import dataPrepare.methods.*;
+import javafx.geometry.Point2D;
+import javafx.scene.paint.Color;
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 
-import javax.naming.NameNotFoundException;
 import java.util.*;
 
 /**
@@ -17,10 +18,179 @@ import java.util.*;
  */
 public class TestPolymorph {
 
+
+    public void newTest(Voronoi voronoi){
+        List<Polygon> chain = new Chain().getChain(voronoi);
+
+
+
+        //for (Polygon polygon : chain){polygon.getHost().addMetric("cellSize", 1000f);}
+        List<Polygon> test = new LinkedList<>();
+        for (int i=0; i<15; i++){
+            test.add(chain.get(i));
+        }
+        prepare(chain);
+
+
+
+
+
+        for (Coordinate coordinate : voronoi.getDots()){
+            coordinate.setX(coordinate.getX()+10);
+            coordinate.setY(coordinate.getY()+10);
+        }
+
+//
+
+//        float min = chain.get(0).getArea();
+//        for (Polygon polygon : chain){if (min>polygon.getArea()){min=polygon.getArea();}}
+//        System.out.println("min "+min);
+        //for (Polygon polygon : chain){polygon.getHost().addMetric("cellSize", min*3);}
+
+
+
+        double[] v = new double[chain.size()];
+        for (int i=0; i<chain.size(); i++){v[i]=(double)chain.get(i).getArea();}
+        float median = (float) new Median().evaluate(v);
+        System.out.println("min "+median);
+        for (Polygon polygon : chain){polygon.getHost().addMetric("cellSize", median);}
+
+        int c = 1;
+        for (Polygon polygon : chain){
+            polymorphTest(polygon, voronoi);
+            System.out.println(c+" from "+chain.size()+" with liefactor: "+checkLieFactor(polygon)+" area: "+polygon.getArea());
+            c++;
+        }
+
+
+        int r=0, sum=0;
+
+        for (Polygon polygon : voronoi.getPolygons()){
+            r++;
+            System.out.println("#"+r+" lie:"+checkLieFactor(polygon));
+            sum+=checkLieFactor(polygon);
+        }
+        System.out.println("TOTAL: "+sum/r);
+
+        try {
+            List<Color> colors = Help.allColors();
+            for (Polygon polygon : voronoi.getPolygons()){polygon.getHost().addMetric("color",colors.get((int)polygon.getHost().getMetrics().get("cycleId")*10));}
+        } catch (ClassNotFoundException | IllegalAccessException e) {e.printStackTrace();}
+    }
+
+    private void prepare(List<Polygon> polygons){
+        for (Polygon polygon : polygons){
+            for (Coordinate coordinate : polygon.getPoints()){
+                coordinate.addMetric("stopPolymorph", false);coordinate.addMetric("c", 0);
+            }
+        }
+    }
+
+
+    private void addColorToDot(Coordinate target, int color, Voronoi voronoi){
+        for (Coordinate coordinate : voronoi.getDots()){
+            coordinate.addMetric("c", 0);
+        }
+        target.addMetric("c", color);
+    }
+
+    private void polymorphTest(Polygon polygon, Voronoi voronoi){
+
+
+        boolean switcher = true;
+        float lieBefore = checkLieFactor(polygon);
+
+        int counter = 0;
+
+        OUT:while (checkLieFactor(polygon) > 1.1f && !checkOnBlocked(polygon)) {
+            if (polygon.getArea()<(float)polygon.getHost().getMetrics().get("cellSize")){break ;}
+
+            //System.out.print("s="+switcher+" ");
+
+            for (int i = 1; i < polygon.getPoints().size() + 1; i++) {
+                Coordinate target = polygon.getPoints().get(i % polygon.getPoints().size());
+                if (!(boolean) target.getMetric("stopPolymorph")) {
+
+                    Coordinate left = polygon.getPoints().get((i - 1));
+                    Coordinate right = polygon.getPoints().get((i + 1) % polygon.getPoints().size());
+                    Coordinate coordinate = new Coordinate(target.getX(), 0f);
+
+
+                    float angle = (getAngle(coordinate, target, right) - 90 + 360) % 360;
+                    if (target.getX() > right.getX()) {angle = (360 - angle + 360 + 180) % 360;}
+
+
+
+                    if (switcher){
+                        addColorToDot(target, 1, voronoi);
+                        float d = getDistance(target, (angle + getAngle(left, target, right) / 2) % 360, polygon);
+                        if (d>10 && dotMovementReflect(voronoi, target, (angle + getAngle(left, target, right) / 2) % 360, d * getFine(target, polygon))){
+                            dotMovement(target, (angle + getAngle(left, target, right) / 2) % 360, d * getFine(target, polygon));
+                        }else {
+                            if (DistanceFromDot.distanceBetweenCoordinates(left, target)>40){AddExternalPoints.brokeEdgeTest(voronoi, left, target);}
+                            if (DistanceFromDot.distanceBetweenCoordinates(right, target)>40){AddExternalPoints.brokeEdgeTest(voronoi, target, right);}
+                            target.addMetric("stopPolymorph", true); break;
+                        }
+                    }else {
+                        addColorToDot(target, 2, voronoi);
+                        //System.out.print(" "+checkLieFactor(polygon));
+                        Point2D z = new Point2D(left.getX(), 0f);
+                        Point2D p1 = new Point2D(left.getX(), left.getY());
+                        Point2D p3 = new Point2D(right.getX(), right.getY());
+
+                        float a = (float) p1.angle(z, p3)+90;
+                        if (p3.getX() < z.getX()) {a = (360 - a + 360 + 180) % 360;}
+                        a=(a+270)%360;
+
+                        float d = getDistance(target, a, polygon);
+
+
+                        if (d>10 && dotMovementReflect(voronoi, target, a, d * getFine(target, polygon))){
+                            dotMovement(target, a, d * getFine(target, polygon));
+                        }else {
+                            if (DistanceFromDot.distanceBetweenCoordinates(left, target)>40){AddExternalPoints.brokeEdgeTest(voronoi, left, target);}
+                            if (DistanceFromDot.distanceBetweenCoordinates(right, target)>40){AddExternalPoints.brokeEdgeTest(voronoi, target, right);}
+                            target.addMetric("stopPolymorph", true); break;
+                        }
+                    }
+
+                    if (!normilizeOnSimmetry(polygon, voronoi)){
+                        System.out.println("GET IT");
+                        addColorToDot(target, 0, voronoi);
+                    }
+
+
+                    //System.out.print("#"+counter+" l "+checkLieFactor(polygon));
+                    SaveVoronoi.getInstance().saveStatement(voronoi);
+                    if (checkLieFactor(polygon) < 1.1f) {break OUT;}
+                }
+            }
+
+            counter++;
+
+            //System.out.println("#"+counter+" lf="+checkLieFactor(polygon)+" lfB="+lieBefore);
+
+            if (checkLieFactor(polygon)>=lieBefore && counter%30==0){
+                switcher^=true;
+            }
+            lieBefore = checkLieFactor(polygon);
+        }
+        System.out.println();
+        for (Coordinate coordinate : polygon.getPoints()){coordinate.addMetric("stopPolymorph", true);}
+        if (!checkOnPlanar(voronoi)){new AddExternalPoints().addeXternalPointsForPlanarityWithPadding(voronoi);}
+    }
+
+
+    private boolean isConvex(Polygon polygon){
+        return ConvexHull.getFromCoordinates(polygon.getPoints()).size() == polygon.getPoints().size();
+    }
+
+
     private static float padding = 10;
 
 
     public TestPolymorph() {
+
     }
 
 
@@ -79,110 +249,7 @@ public class TestPolymorph {
         float dBetweenCollisonPointAndEdgeVerteses=DistanceFromDot.distanceBetweenCoordinates(coordinate, edge[0])+DistanceFromDot.distanceBetweenCoordinates(coordinate, edge[1]);
         return (Math.round(dEdge*100)/100==Math.round(dBetweenCollisonPointAndEdgeVerteses*100)/100);
     }
-    public void polymorph(List<dataPrepare.data.voronoi.Polygon> polygons, Voronoi voronoi, Integer a){
 
-        polygons.sort((o1, o2) -> (float)o1.getHost().getMetrics().get("order")>(float)o2.getHost().getMetrics().get("order") ? 1 : -1);
-
-
-
-        for (Polygon polygon : polygons){
-            for (Coordinate coordinate : polygon.getPoints()){
-                coordinate.addMetric("BLUE", false);
-            }
-            if (!checkOnBlocked(polygon)){
-                float lieFactor = checkLieFactor(polygon);
-                float diff = 0;
-                boolean normalizationOn = true;
-                if (getNumberOfFreePoints(polygon)==0){
-                    new AddExternalPoints().addOnePointPerEdge(polygon, voronoi);
-                }
-                OUT:while (checkLieFactor(polygon)>1.3f){
-
-                    for (int i=1; i<polygon.getPoints().size()+1; i++){
-                        Coordinate target = polygon.getPoints().get(i%polygon.getPoints().size());
-                        if (!(boolean)target.getMetric("stopPolymorph") && !(boolean)target.getMetric("BLUE")){
-                            Iterations.getInstance().iter();
-                            Coordinate left = polygon.getPoints().get((i-1));
-                            Coordinate right = polygon.getPoints().get((i+1)%polygon.getPoints().size());
-                            Coordinate coordinate = new Coordinate(target.getX(), 0f);
-                            float angle = (getAngle(coordinate, target, right)-90+360)%360;
-                            if (target.getX()>right.getX()){
-                                angle=(360-angle+360+180)%360;
-                            }
-                            float d = getDistance(target, (angle+getAngle(left, target, right)/2)%360, polygon);
-
-                            if (d>0 && normalizationOn){
-                                if (dotMovementReflect(voronoi, target, (angle+getAngle(left, target, right)/2)%360, d*getFine(target, polygon))){
-                                    dotMovement(target, (angle+getAngle(left, target, right)/2)%360, d*getFine(target, polygon));
-                                    normilizeOnSimmetry(polygon, voronoi);
-                                }
-                            }else {
-                                if (dotMovementReflect(voronoi, target, (angle+getAngle(left, target, right)/2)%360, 1)){
-                                        dotMovement(target, (angle+getAngle(left, target, right)/2)%360, 1);
-                                        normilizeOnSimmetry(polygon, voronoi);
-                                }else {
-                                    if (getNumberOfFreePoints(polygon)<3){
-                                        new AddExternalPoints().addOnePointPerEdge(polygon, voronoi);
-                                        //normilizeOnSimmetry(polygon, voronoi);
-                                    }
-                                }
-
-                            }
-
-
-                        }
-
-//                        if ((int)polygon.getHost().getMetrics().get("deep")==2){
-//                            SaveVoronoi.getInstance().saveStatement(voronoi.getPolygons());
-//                        }
-
-                        if (checkLieFactor(polygon)<1.3f){
-                            break OUT;
-                        }
-                    }
-                    //SaveVoronoi.getInstance().saveStatement(voronoi.getPolygons());
-                    //if ((int)polygon.getHost().getMetrics().get("deep")==2){
-
-                    //}
-
-
-                    float newLieFactor = checkLieFactor(polygon);
-                    float newDiff = Math.abs(lieFactor-newLieFactor);
-                    if (newDiff==diff && !normalizationOn){
-                        new AddExternalPoints().addOnePointPerEdge(polygon, voronoi);
-                    }
-                    if (newDiff == diff){
-                        normalizationOn=false;
-                    }
-                    int bluePoints=0;
-                    for (Coordinate coordinate : polygon.getPoints()){
-                        if ((boolean)coordinate.getMetric("stopPolymorph") || (boolean)coordinate.getMetric("BLUE")){
-                            bluePoints++;
-                        }
-                    }
-                    if (bluePoints==polygon.getPoints().size()){
-                        new AddExternalPoints().addOnePointPerEdge(polygon, voronoi);
-                    }
-                    lieFactor = newLieFactor;
-                    diff = newDiff;
-                    if(distanceOfBiggestEdgeThatNotBlocked(polygon)<padding+1){
-                        break OUT;
-                    }
-                }
-            }
-            for (Coordinate coordinate : polygon.getPoints()){
-                coordinate.addMetric("stopPolymorph", true);
-            }
-            for (Coordinate coordinate : polygon.getPoints()){
-                coordinate.addMetric("BLUE", false);
-            }
-
-            if (!checkOnPlanar(voronoi)){
-                new AddExternalPoints().addeXternalPointsForPlanarityWithPadding(voronoi);
-            }
-
-        }
-    }
 
     private int getNumberOfFreePoints(Polygon polygon){
         int counter = 0;
@@ -230,6 +297,11 @@ public class TestPolymorph {
                     curveToNormal.add(polygon.getPoints().get((i+1)%polygon.getPoints().size()));
                     break;
                 }
+            }
+        }else {
+            curveToNormal = new LinkedList<>();
+            for (Coordinate coordinate: polygon.getPoints()){
+                curveToNormal.add(coordinate);
             }
         }
 
@@ -360,7 +432,7 @@ public class TestPolymorph {
                 return false;
             }
         }
-        System.out.println("BLOCKED "+polygon.getHost().getMetrics().get("id"));
+        System.out.println("TOTAL BLOCK");
         return true;
     }
 
@@ -377,7 +449,7 @@ public class TestPolymorph {
         return (float) Math.toDegrees(Math.acos (middle));
     }
 
-    private static float checkLieFactor(dataPrepare.data.voronoi.Polygon polygon){
+    public static float checkLieFactor(dataPrepare.data.voronoi.Polygon polygon){
         if ((float)polygon.getHost().getMetrics().get("cellSize")>polygon.getArea()){
             return (float)polygon.getHost().getMetrics().get("cellSize")/polygon.getArea();
         }else {

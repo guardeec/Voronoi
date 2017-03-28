@@ -1,13 +1,151 @@
 package dataPrepare.prepare;
 
+import com.google.gson.Gson;
 import dataPrepare.data.graph.Coordinate;
 import dataPrepare.data.graph.Graph;
 import dataPrepare.data.graph.Host;
+
+import java.util.*;
 
 /**
  * Created by anna on 27.08.15.
  */
 public class GenerateGraph {
+
+    private static class Node{
+        String name;
+        Coordinate coordinate;
+        List nodes;
+        public Node(String name) {
+            this.name = name;
+            this.nodes = new LinkedList<>();
+        }
+
+        public void add(Node node){
+            this.nodes.add(node);
+        }
+        public List<Node> get(){
+            return nodes;
+        }
+
+        public Coordinate getCoordinate() {
+            return coordinate;
+        }
+
+        public void setCoordinate(Coordinate coordinate) {
+            this.coordinate = coordinate;
+        }
+    }
+
+    public static Graph generateTree(Integer k){
+        Graph graph = new Graph();
+        Host root =new Host(0, new Coordinate(0,0));
+        graph.setHost(root);
+        nodeToGraph(graph, root, k);
+        return graph;
+    }
+
+    public static Graph generateTreeStatic(){
+        Graph graph = new Graph();
+        for (int i=0; i<50; i++){
+            graph.setHost(new Host(1, new Coordinate(0,0)));
+        }
+
+        int[][] hostRelations = {
+                {0,1},  {0,2},  {0,3}, {0,4}, {0, 5},
+                {1,6}, {1,7}, {1,8}, {1,9}, {1,10}, {2, 11}, {2, 12},
+                {2,13}, {2,14}, {2, 15}, {3, 16}, {3, 17}
+        };
+
+        for (int i=0; i<hostRelations.length; i++){
+            graph.setRelation(
+                    graph.getHosts().get(hostRelations[i][0]),
+                    graph.getHosts().get(hostRelations[i][1])
+            );
+        }
+        for (int i=18; i<50; i++){
+            graph.setRelation(
+                    graph.getHosts().get(new Random().nextInt(17)),
+                    graph.getHosts().get(i)
+            );
+        }
+        return graph;
+    }
+
+    public static Graph generateTreeSuperStatic(){
+        Graph graph = new Graph();
+
+
+        int[][] hostRelations = {
+                {0,1},  {0,2},  {0,3}, {0,4}, {0, 5},
+                {1,6}, {1,7}, {1,8}, {1,9}, {1,10}, {2, 11}, {2, 12},
+                {2,13}, {2,14}, {2, 15}, {3, 16}, {3, 17}
+        };
+
+        for (int i=0; i<18; i++){
+            Host host = new Host(1, new Coordinate(0,0));
+            float m = 500f;
+            switch (i){
+                case 0:{m*=63;break;}
+                case 1:{m*=19;break;}
+                case 2:{m*=18;break;}
+                case 3:{m*=14;break;}
+                case 4:{m*=4;break;}
+                case 5:{m*=8;break;}
+                case 6:{m*=6;break;}
+                case 7:{m*=3;break;}
+                case 8:{m*=1;break;}
+                case 9:{m*=2;break;}
+                case 10:{m*=7;break;}
+                case 11:{m*=3;break;}
+                case 12:{m*=2;break;}
+                case 13:{m*=2;break;}
+                case 14:{m*=5;break;}
+                case 15:{m*=6;break;}
+                case 16:{m*=9;break;}
+                case 17:{m*=5;break;}
+            }
+
+//            m = 2000f;
+//            switch (i){
+//                case 0:{m*=5;break;}
+//                case 1:{m*=6;break;}
+//                case 2:{m*=6;break;}
+//                case 3:{m*=3;break;}
+//            }
+            //m = 2000f;
+            host.addMetric("cellSize", m);
+            graph.setHost(host);
+        }
+
+        for (int i=0; i<hostRelations.length; i++){
+            graph.setRelation(
+                    graph.getHosts().get(hostRelations[i][0]),
+                    graph.getHosts().get(hostRelations[i][1])
+            );
+        }
+
+
+        return graph;
+    }
+
+    private static void nodeToGraph(Graph graph, Host host, int number){
+        List<Host> hosts = new LinkedList<>();
+        for (int i=0; i<5; i++, number--){
+            Host h = new Host(number, new Coordinate(0,0));
+            hosts.add(h);
+            graph.setHost(h);
+        }
+        for (Host host1 : hosts){
+            graph.setRelation(host, host1);
+        }
+        for (Host h : hosts){
+            if (number>0){
+                nodeToGraph(graph, h, number);
+            }
+
+        }
+    }
 
     public static Graph generateConstantGraph(){
         Graph graph = new Graph();
